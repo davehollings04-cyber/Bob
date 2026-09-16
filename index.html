@@ -1,0 +1,1651 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#08090d" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>Spank Betting</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪙</text></svg>" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  if (typeof tailwind !== 'undefined') tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          ink:   { 900:'#08090d', 800:'#0e1017', 700:'#141722', 600:'#1b1f2e', 500:'#252a3b', 400:'#333a50' },
+          neon:  { DEFAULT:'#22e584', dark:'#12b869', glow:'rgba(34,229,132,.35)' },
+          flame: { DEFAULT:'#ff5470', dark:'#e63757' },
+          gold:  { DEFAULT:'#ffc83d', dark:'#e0a800' },
+          violet:{ DEFAULT:'#8b5cf6' }
+        },
+        fontFamily: {
+          sans: ['-apple-system','BlinkMacSystemFont','SF Pro Display','Segoe UI','Roboto','Helvetica Neue','sans-serif']
+        }
+      }
+    }
+  }
+</script>
+<style>
+  *{ -webkit-tap-highlight-color: transparent; }
+  html,body{ overscroll-behavior-y:none; }
+  body{
+    background:#08090d;
+    background-image:
+      radial-gradient(900px 500px at 12% -8%, rgba(34,229,132,.10), transparent 60%),
+      radial-gradient(800px 500px at 88% -4%, rgba(139,92,246,.12), transparent 60%);
+    background-attachment: fixed;
+  }
+  .no-scrollbar::-webkit-scrollbar{ display:none; }
+  .no-scrollbar{ -ms-overflow-style:none; scrollbar-width:none; }
+
+  .card{
+    background: linear-gradient(180deg, rgba(27,31,46,.92), rgba(20,23,34,.92));
+    border:1px solid rgba(255,255,255,.07);
+    border-radius:20px;
+    box-shadow: 0 10px 30px -12px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.04);
+  }
+  .glass{ backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%); }
+
+  .press{ transition: transform .12s cubic-bezier(.2,.8,.3,1), background-color .18s ease, border-color .18s ease, opacity .18s ease; }
+  .press:active{ transform: scale(.96); }
+
+  .view{ animation: viewIn .32s cubic-bezier(.22,.9,.3,1); }
+  @keyframes viewIn{ from{ opacity:0; transform: translateY(10px) scale(.995);} to{ opacity:1; transform:none; } }
+
+  .stagger > *{ animation: rowIn .38s cubic-bezier(.22,.9,.3,1) backwards; }
+  .stagger > *:nth-child(1){ animation-delay:.02s } .stagger > *:nth-child(2){ animation-delay:.05s }
+  .stagger > *:nth-child(3){ animation-delay:.08s } .stagger > *:nth-child(4){ animation-delay:.11s }
+  .stagger > *:nth-child(5){ animation-delay:.14s } .stagger > *:nth-child(6){ animation-delay:.17s }
+  .stagger > *:nth-child(7){ animation-delay:.2s }  .stagger > *:nth-child(8){ animation-delay:.23s }
+  @keyframes rowIn{ from{ opacity:0; transform: translateY(14px);} to{ opacity:1; transform:none; } }
+
+  @keyframes pulseDot{ 0%,100%{ opacity:1; transform:scale(1);} 50%{ opacity:.35; transform:scale(.8);} }
+  .live-dot{ animation: pulseDot 1.4s ease-in-out infinite; }
+
+  @keyframes coinPop{ 0%{ transform:scale(1);} 35%{ transform:scale(1.18);} 100%{ transform:scale(1);} }
+  .coin-pop{ animation: coinPop .5s cubic-bezier(.3,1.4,.4,1); }
+
+  @keyframes sheetUp{ from{ transform: translateY(102%);} to{ transform:none; } }
+  @keyframes sheetDown{ from{ transform:none;} to{ transform: translateY(102%);} }
+  .sheet-in{ animation: sheetUp .34s cubic-bezier(.22,.9,.3,1); }
+  .sheet-out{ animation: sheetDown .26s cubic-bezier(.5,0,.75,0) forwards; }
+
+  @keyframes toastIn{ from{ opacity:0; transform: translateY(16px) scale(.96);} to{ opacity:1; transform:none;} }
+  @keyframes toastOut{ to{ opacity:0; transform: translateY(12px) scale(.97);} }
+  .toast-in{ animation: toastIn .3s cubic-bezier(.22,.9,.3,1); }
+  .toast-out{ animation: toastOut .28s ease forwards; }
+
+  @keyframes flash{ 0%{ background-color: rgba(34,229,132,.22);} 100%{ background-color: transparent;} }
+  .flash{ animation: flash 1s ease-out; }
+
+  @keyframes confettiFall{ to{ transform: translate3d(var(--dx), 110vh, 0) rotate(var(--rot)); opacity:0; } }
+  .confetti-bit{ position:fixed; top:-16px; width:9px; height:14px; border-radius:2px; z-index:90; animation: confettiFall linear forwards; }
+
+  .tab-active{ color:#22e584; }
+  .tab-active .tab-ico{ transform: translateY(-2px) scale(1.08); }
+  .tab-ico{ transition: transform .22s cubic-bezier(.3,1.4,.4,1); }
+
+  input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+  input[type=number]{ -moz-appearance:textfield; }
+
+  .odd-btn{ transition: transform .12s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease; }
+  .odd-btn:active{ transform: scale(.95); }
+  .odd-sel{ background: linear-gradient(180deg, rgba(34,229,132,.22), rgba(34,229,132,.10)) !important; border-color: rgba(34,229,132,.6) !important; box-shadow: 0 0 0 1px rgba(34,229,132,.25), 0 8px 24px -12px rgba(34,229,132,.9); }
+
+  .bar{ transition: height .5s cubic-bezier(.22,.9,.3,1); }
+  .safe-b{ padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .safe-t{ padding-top: env(safe-area-inset-top, 0px); }
+</style>
+</head>
+
+<body class="font-sans text-slate-100 antialiased selection:bg-neon/30">
+
+<!-- ============ APP SHELL ============ -->
+<div id="app" class="mx-auto min-h-screen w-full max-w-[520px] relative">
+
+  <!-- Header -->
+  <header id="header" class="sticky top-0 z-40 glass bg-ink-900/70 border-b border-white/5 safe-t">
+    <div class="flex items-center justify-between px-4 py-3">
+      <div class="flex items-center gap-2.5">
+        <div class="h-9 w-9 rounded-xl bg-gradient-to-br from-neon to-emerald-600 grid place-items-center shadow-lg shadow-neon/20">
+          <span class="text-ink-900 font-black text-lg leading-none">S</span>
+        </div>
+        <div class="leading-none">
+          <div class="font-black tracking-tight text-[17px]">SPANK<span class="text-neon">BET</span></div>
+          <div id="headerSub" class="text-[10px] uppercase tracking-[.16em] text-slate-500 mt-1">Play money · no cash</div>
+        </div>
+      </div>
+      <button id="balancePill" class="press flex items-center gap-2 rounded-full border border-white/10 bg-ink-700/80 px-3.5 py-2">
+        <span class="text-base leading-none">🪙</span>
+        <span id="balanceText" class="font-black tabular-nums text-[15px] text-gold">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Views -->
+  <main id="main" class="px-4 pt-4 pb-40"></main>
+
+  <!-- Bottom nav -->
+  <nav class="fixed bottom-0 inset-x-0 z-40">
+    <div class="mx-auto max-w-[520px] glass bg-ink-900/85 border-t border-white/10">
+      <div id="tabbar" class="grid grid-cols-5 safe-b"></div>
+    </div>
+  </nav>
+
+  <!-- Bet slip sheet -->
+  <div id="slipRoot" class="fixed inset-0 z-50 hidden"></div>
+
+  <!-- Modal root (profile edit / confirmations) -->
+  <div id="modalRoot" class="fixed inset-0 z-[60] hidden"></div>
+
+  <!-- Toasts -->
+  <div id="toastRoot" class="fixed bottom-[86px] inset-x-0 z-[70] flex flex-col-reverse items-center gap-2 px-4 pointer-events-none"></div>
+</div>
+
+<script>
+/* ================================================================
+   SPANK BETTING — single file app
+   Virtual currency only ("Spank Coins"). No real money, ever.
+================================================================= */
+(() => {
+'use strict';
+
+/* ---------------- constants ---------------- */
+const LS_KEY        = 'spankbet.state.v1';
+const START_BALANCE = 2500;
+const DAILY_BONUS   = 750;
+const BONUS_COOLDOWN= 8 * 60 * 60 * 1000;   // 8h
+const SIM_MS        = 4 * 60 * 1000;        // a live game takes 4 real minutes
+const MIN_BET       = 10;
+
+const LEAGUES = {
+  NFL:    { icon:'🏈', periods:4, periodMin:15, base:45, spread:14, name:'NFL' },
+  NBA:    { icon:'🏀', periods:4, periodMin:12, base:224, spread:11, name:'NBA' },
+  MLB:    { icon:'⚾️', periods:9, periodMin:0,  base:8.5, spread:1.5, name:'MLB' },
+  NHL:    { icon:'🏒', periods:3, periodMin:20, base:6.5, spread:1.5, name:'NHL' },
+  SOCCER: { icon:'⚽️', periods:2, periodMin:45, base:2.5, spread:1,  name:'EPL' },
+  UFC:    { icon:'🥊', periods:3, periodMin:5,  base:0,   spread:0,  name:'UFC' }
+};
+
+const TEAMS = {
+  NFL: [
+    ['Chiefs','KC','#e31837'], ['Eagles','PHI','#004c54'], ['49ers','SF','#aa0000'], ['Bills','BUF','#00338d'],
+    ['Cowboys','DAL','#041e42'], ['Ravens','BAL','#241773'], ['Lions','DET','#0076b6'], ['Dolphins','MIA','#008e97'],
+    ['Packers','GB','#203731'], ['Bengals','CIN','#fb4f14']
+  ],
+  NBA: [
+    ['Celtics','BOS','#007a33'], ['Nuggets','DEN','#0e2240'], ['Lakers','LAL','#552583'], ['Bucks','MIL','#00471b'],
+    ['Suns','PHX','#e56020'], ['Warriors','GSW','#1d428a'], ['Heat','MIA','#98002e'], ['Thunder','OKC','#007ac1'],
+    ['Mavericks','DAL','#00538c'], ['Knicks','NYK','#f58426']
+  ],
+  MLB: [
+    ['Dodgers','LAD','#005a9c'], ['Yankees','NYY','#132448'], ['Braves','ATL','#ce1141'], ['Astros','HOU','#eb6e1f'],
+    ['Padres','SD','#2f241d'], ['Cubs','CHC','#0e3386']
+  ],
+  NHL: [
+    ['Oilers','EDM','#ff4c00'], ['Panthers','FLA','#c8102e'], ['Avalanche','COL','#6f263d'], ['Bruins','BOS','#ffb81c'],
+    ['Rangers','NYR','#0038a8'], ['Knights','VGK','#b4975a']
+  ],
+  SOCCER: [
+    ['Arsenal','ARS','#ef0107'], ['Man City','MCI','#6cabdd'], ['Liverpool','LIV','#c8102e'], ['Chelsea','CHE','#034694'],
+    ['Spurs','TOT','#132257'], ['Man Utd','MUN','#da291c']
+  ],
+  UFC: [
+    ['Volkanovski','VOL','#d20a0a'], ['Makhachev','MAK','#1f6feb'], ['Pereira','PER','#8b5cf6'], ['Adesanya','ADE','#0ea5e9'],
+    ['O’Malley','OMA','#f59e0b'], ['Edwards','EDW','#22c55e']
+  ]
+};
+
+const BOT_NAMES = [
+  ['ParlayPastor','🙏'], ['CoinFiend','😈'], ['VegasVic','🎰'], ['HoopsHermit','🏀'], ['GridironGus','🏈'],
+  ['LockCityLina','🔒'], ['FadeTheHerd','🐑'], ['UnderdogUzi','🐕'], ['ChalkEaterCJ','⚪️'], ['MoneylineMo','💸'],
+  ['SweatKing','😅'], ['BankrollBex','💼'], ['PuckLuckPat','🏒'], ['DimeDropperD','🎯'], ['CashOutCarl','🏃']
+];
+
+const BADGES = [
+  { id:'first',   icon:'🎟️', name:'First Ticket',   desc:'Place your first bet',                   test:s => s.stats.bets >= 1 },
+  { id:'winner',  icon:'✅', name:'Cashed',          desc:'Win a bet',                              test:s => s.stats.wins >= 1 },
+  { id:'streak3', icon:'🔥', name:'Heater',          desc:'Win 3 bets in a row',                    test:s => s.stats.bestStreak >= 3 },
+  { id:'dog',     icon:'🐕', name:'Dog Whisperer',   desc:'Cash a +150 underdog or longer',         test:s => s.stats.dogWin },
+  { id:'high',    icon:'💎', name:'High Roller',     desc:'Risk 1,000 coins on one ticket',         test:s => s.stats.biggestStake >= 1000 },
+  { id:'comeback',icon:'🩹', name:'Comeback Kid',    desc:'Claim a bailout after going broke',      test:s => s.stats.bailouts >= 1 },
+  { id:'volume',  icon:'📚', name:'Volume Shooter',  desc:'Place 10 bets',                          test:s => s.stats.bets >= 10 },
+  { id:'sharp',   icon:'🧠', name:'Certified Sharp', desc:'60%+ win rate on 5+ settled bets',       test:s => (s.stats.wins+s.stats.losses) >= 5 && s.stats.wins/(s.stats.wins+s.stats.losses) >= .6 },
+  { id:'whale',   icon:'🐳', name:'Whale',           desc:'Hold 10,000 coins',                      test:s => s.stats.peakBalance >= 10000 },
+  { id:'profit',  icon:'📈', name:'In The Green',    desc:'Finish up 2,500 coins lifetime',         test:s => s.stats.profit >= 2500 }
+];
+
+const AVATARS = ['🦍','🐉','🦅','🐺','🦊','🐸','🦈','🐲','👑','🔥','⚡️','💎','🎯','🃏','🚀','🥷','🤖','👽','🦁','🐍'];
+
+/* ---------------- tiny utils ---------------- */
+const $  = (s, r=document) => r.querySelector(s);
+const el = (t, cls, html) => { const n=document.createElement(t); if(cls) n.className=cls; if(html!=null) n.innerHTML=html; return n; };
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const uid = () => Math.random().toString(36).slice(2,10);
+const fmt = n => Math.round(n).toLocaleString('en-US');
+const fmt1 = n => (Math.round(n*10)/10).toLocaleString('en-US',{minimumFractionDigits:1, maximumFractionDigits:1});
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const now = () => Date.now();
+
+function mulberry(seed){ let a = seed>>>0; return () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a>>>15), 1|a); t = (t + Math.imul(t ^ (t>>>7), 61|t)) ^ t; return ((t ^ (t>>>14))>>>0)/4294967296; }; }
+const rand = mulberry((now()/1000)|0);
+const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+
+function timeAgo(t){
+  const s = Math.max(1, (now()-t)/1000);
+  if (s < 60) return Math.floor(s)+'s ago';
+  if (s < 3600) return Math.floor(s/60)+'m ago';
+  if (s < 86400) return Math.floor(s/3600)+'h ago';
+  return Math.floor(s/86400)+'d ago';
+}
+function countdown(ms){
+  if (ms <= 0) return 'Starting';
+  const m = Math.floor(ms/60000), s = Math.floor(ms%60000/1000);
+  if (m >= 60) return Math.floor(m/60)+'h '+(m%60)+'m';
+  return m+'m '+String(s).padStart(2,'0')+'s';
+}
+
+/* odds helpers (American <-> decimal multiplier) */
+const americanToMult = a => a > 0 ? 1 + a/100 : 1 + 100/Math.abs(a);
+const fmtAmerican    = a => (a > 0 ? '+' : '') + Math.round(a);
+function probToAmerican(p){
+  p = clamp(p, .04, .96);
+  return p >= .5 ? -Math.round((p/(1-p))*100/5)*5 : Math.round(((1-p)/p)*100/5)*5;
+}
+const fmtLine = n => (n > 0 ? '+' : '') + (Math.round(n*2)/2);
+
+/* ---------------- state ---------------- */
+let S = null;
+let ui = { tab:'home', slip:null, sheetOpen:false, feedFilter:'all', gamesFilter:'ALL', lastBalance:0 };
+
+function freshStats(){
+  return { bets:0, wins:0, losses:0, pushes:0, wagered:0, returned:0, profit:0, streak:0, bestStreak:0,
+           biggestWin:0, biggestStake:0, dogWin:false, bailouts:0, peakBalance:START_BALANCE };
+}
+
+function freshState(){
+  const s = {
+    v: 1,
+    profile: { name:'Rookie', avatar:'🦍', joined: now(), bio:'Chasing the green.' },
+    balance: START_BALANCE,
+    bets: [],
+    games: [],
+    feed: [],
+    board: seedBoard(),
+    history: [{ t: now(), balance: START_BALANCE }],
+    stats: freshStats(),
+    lastBonus: 0,
+    lastFeedPush: now(),
+    seenBadges: []
+  };
+  s.games = makeSlate();
+  s.feed  = seedFeed();
+  return s;
+}
+
+function load(){
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return freshState();
+    const parsed = JSON.parse(raw);
+    if (!parsed || parsed.v !== 1 || typeof parsed.balance !== 'number') return freshState();
+    parsed.stats   = Object.assign(freshStats(), parsed.stats || {});
+    parsed.profile = Object.assign({ name:'Rookie', avatar:'🦍', joined:now(), bio:'' }, parsed.profile || {});
+    parsed.bets    = Array.isArray(parsed.bets) ? parsed.bets : [];
+    parsed.games   = Array.isArray(parsed.games) && parsed.games.length ? parsed.games : makeSlate();
+    parsed.feed    = Array.isArray(parsed.feed) ? parsed.feed : seedFeed();
+    parsed.board   = Array.isArray(parsed.board) && parsed.board.length ? parsed.board : seedBoard();
+    parsed.history = Array.isArray(parsed.history) && parsed.history.length ? parsed.history : [{t:now(), balance:parsed.balance}];
+    parsed.seenBadges = Array.isArray(parsed.seenBadges) ? parsed.seenBadges : [];
+    return parsed;
+  } catch(e){ return freshState(); }
+}
+
+let saveTimer = null;
+function save(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(S)); }
+    catch(e){ /* storage full / blocked — app still works in-memory */ }
+  }, 120);
+}
+
+function pushHistory(){
+  const h = S.history;
+  const last = h[h.length-1];
+  if (!last || last.balance !== S.balance) h.push({ t: now(), balance: S.balance });
+  if (h.length > 80) S.history = h.slice(-80);
+}
+
+/* ---------------- game slate generation ---------------- */
+function makeGame(league, homeT, awayT, startsAt){
+  const L = LEAGUES[league];
+  const homeEdge = .5 + (Math.random()*.44 - .22) + .03;              // home cushion
+  const pHome = clamp(homeEdge, .22, .82);
+  const vig = .026;
+
+  const g = {
+    id: uid(),
+    league,
+    home: { name: homeT[0], abbr: homeT[1], color: homeT[2], rec: recStr() },
+    away: { name: awayT[0], abbr: awayT[1], color: awayT[2], rec: recStr() },
+    startsAt,
+    pHome,
+    ml:     { home: probToAmerican(pHome + vig), away: probToAmerican(1 - pHome + vig) },
+    spread: null,
+    total:  null,
+    events: [],
+    settled: false
+  };
+
+  if (league !== 'UFC') {
+    const raw = (pHome - .5) * L.spread * 2;
+    let line = Math.round(raw*2)/2;
+    if (line === 0) line = raw >= 0 ? .5 : -.5;   // pick'em: keep the hook on the ML favorite
+    g.spread = { home: -line, away: line, odds: -110 };
+    const tot = league === 'MLB' || league === 'SOCCER' || league === 'NHL'
+      ? Math.round((L.base + (Math.random()*2-1))*2)/2
+      : Math.round(L.base + (Math.random()*14-7));
+    g.total = { line: tot, odds: -110 };
+  }
+
+  // Pre-generate the whole scoring timeline so results are stable across refreshes.
+  g.events = makeTimeline(league, pHome, g.total ? g.total.line : L.base);
+  return g;
+}
+
+function recStr(){
+  const w = 3 + Math.floor(Math.random()*12), l = 1 + Math.floor(Math.random()*11);
+  return w + '-' + l;
+}
+
+function makeTimeline(league, pHome, totalLine){
+  const ev = [];
+  if (league === 'UFC') {
+    // One decisive event: winner decided at a random point (finish) or at the bell.
+    const finish = Math.random() < .55;
+    const t = finish ? .18 + Math.random()*.7 : 1;
+    ev.push({ t, side: Math.random() < pHome ? 'home' : 'away', pts: 1 });
+    return ev;
+  }
+  const target = Math.max(1, Math.round(totalLine + (Math.random()*totalLine*.34 - totalLine*.17)));
+  const unit   = league === 'NBA' ? 2.4 : league === 'NFL' ? 5.6 : 1;
+  const scores = Math.max(1, Math.round(target/unit));
+  for (let i=0;i<scores;i++){
+    const side = Math.random() < (pHome*.55 + .225) ? 'home' : 'away';
+    let pts = 1;
+    if (league === 'NBA') pts = Math.random() < .3 ? 3 : Math.random() < .2 ? 1 : 2;
+    if (league === 'NFL') pts = Math.random() < .68 ? 7 : 3;
+    ev.push({ t: Math.random()*.985, side, pts });
+  }
+  ev.sort((a,b) => a.t - b.t);
+  return ev;
+}
+
+function makeSlate(){
+  const games = [];
+  const t = now();
+  const plan = [
+    ['NBA',   -SIM_MS*0.55], ['NFL', -SIM_MS*0.28], ['NHL', -SIM_MS*0.12],
+    ['NBA',    45*1000],     ['NFL',  3*60*1000],   ['SOCCER', 6*60*1000],
+    ['MLB',    9*60*1000],   ['UFC', 13*60*1000],   ['NBA', 18*60*1000],
+    ['NFL',   26*60*1000],   ['SOCCER', 34*60*1000],['NHL', 48*60*1000],
+    ['MLB',   62*60*1000],   ['UFC', 95*60*1000]
+  ];
+  for (const [league, offset] of plan){
+    const pool = TEAMS[league].slice();
+    const a = pool.splice(Math.floor(Math.random()*pool.length),1)[0];
+    const b = pool.splice(Math.floor(Math.random()*pool.length),1)[0];
+    games.push(makeGame(league, a, b, t + offset));
+  }
+  return games;
+}
+
+/* ---------------- live game math ---------------- */
+function progressOf(g){
+  const dt = now() - g.startsAt;
+  if (dt <= 0) return 0;
+  return clamp(dt / SIM_MS, 0, 1);
+}
+const isLive  = g => progressOf(g) > 0 && progressOf(g) < 1;
+const isFinal = g => progressOf(g) >= 1;
+const isPre   = g => progressOf(g) <= 0;
+
+function scoreOf(g){
+  const p = progressOf(g);
+  let home = 0, away = 0;
+  for (const e of g.events){ if (e.t <= p) (e.side === 'home' ? (home += e.pts) : (away += e.pts)); }
+  return { home, away };
+}
+function finalScore(g){
+  let home = 0, away = 0;
+  for (const e of g.events){ (e.side === 'home' ? (home += e.pts) : (away += e.pts)); }
+  return { home, away };
+}
+
+function clockLabel(g){
+  const L = LEAGUES[g.league];
+  const p = progressOf(g);
+  if (p <= 0) return null;
+  if (p >= 1) return 'FINAL';
+  const per = clamp(Math.floor(p * L.periods) + 1, 1, L.periods);
+  const within = p * L.periods - (per - 1);
+
+  if (g.league === 'MLB'){
+    return (within < .5 ? 'TOP ' : 'BOT ') + per;
+  }
+  if (g.league === 'UFC'){
+    const left = L.periodMin * (1 - within);
+    return 'R' + per + ' · ' + Math.floor(left) + ':' + String(Math.floor((left%1)*60)).padStart(2,'0');
+  }
+  if (g.league === 'SOCCER'){
+    const mins = Math.floor(p * 90) + 1;
+    return mins + "'";
+  }
+  const left = L.periodMin * (1 - within);
+  const suffix = g.league === 'NHL' ? ['1st','2nd','3rd'][per-1] : 'Q' + per;
+  return suffix + ' · ' + Math.floor(left) + ':' + String(Math.floor((left%1)*60)).padStart(2,'0');
+}
+
+/* ---------------- markets ---------------- */
+function marketsFor(g){
+  const m = [];
+  m.push({ type:'ml', side:'away', label: g.away.abbr + ' ML',   sub:'Moneyline', odds:g.ml.away });
+  m.push({ type:'ml', side:'home', label: g.home.abbr + ' ML',   sub:'Moneyline', odds:g.ml.home });
+  if (g.spread){
+    m.push({ type:'spread', side:'away', label: g.away.abbr+' '+fmtLine(g.spread.away), sub:'Spread', odds:g.spread.odds, line:g.spread.away });
+    m.push({ type:'spread', side:'home', label: g.home.abbr+' '+fmtLine(g.spread.home), sub:'Spread', odds:g.spread.odds, line:g.spread.home });
+  }
+  if (g.total){
+    m.push({ type:'total', side:'over',  label:'Over '+g.total.line,  sub:'Total', odds:g.total.odds, line:g.total.line });
+    m.push({ type:'total', side:'under', label:'Under '+g.total.line, sub:'Total', odds:g.total.odds, line:g.total.line });
+  }
+  return m;
+}
+
+/* ---------------- betting ---------------- */
+function openSlip(gameId, market){
+  const g = S.games.find(x => x.id === gameId);
+  if (!g || isFinal(g)) return toast('That game is already final.', 'bad');
+  ui.slip = {
+    gameId, market,
+    stake: Math.min(100, Math.max(MIN_BET, Math.floor(S.balance/10/10)*10 || MIN_BET))
+  };
+  if (ui.slip.stake > S.balance) ui.slip.stake = Math.floor(S.balance);
+  ui.sheetOpen = true;
+  renderSlip();
+  renderMain();
+}
+
+function closeSlip(){
+  const sheet = $('#sheetPanel');
+  const root  = $('#slipRoot');
+  if (sheet){
+    sheet.classList.add('sheet-out');
+    const bd = $('#sheetBackdrop'); if (bd) bd.style.opacity = '0';
+    setTimeout(() => { root.classList.add('hidden'); root.innerHTML=''; }, 250);
+  } else { root.classList.add('hidden'); root.innerHTML=''; }
+  ui.sheetOpen = false;
+  ui.slip = null;
+  renderMain();
+}
+
+function placeBet(){
+  const slip = ui.slip; if (!slip) return;
+  const g = S.games.find(x => x.id === slip.gameId);
+  if (!g) return closeSlip();
+  if (isFinal(g)) { toast('Game just went final — bet cancelled.', 'bad'); return closeSlip(); }
+
+  const stake = Math.floor(slip.stake);
+  if (!Number.isFinite(stake) || stake < MIN_BET) return toast('Minimum bet is ' + MIN_BET + ' coins.', 'bad');
+  if (stake > S.balance)  return toast("You don't have enough coins.", 'bad');
+
+  const mult = americanToMult(slip.market.odds);
+  const bet = {
+    id: uid(),
+    gameId: g.id,
+    league: g.league,
+    matchup: g.away.abbr + ' @ ' + g.home.abbr,
+    matchupFull: g.away.name + ' @ ' + g.home.name,
+    type: slip.market.type,
+    side: slip.market.side,
+    line: slip.market.line != null ? slip.market.line : null,
+    label: slip.market.label,
+    sub: slip.market.sub,
+    odds: slip.market.odds,
+    stake,
+    toWin: Math.round(stake * mult - stake),
+    payout: Math.round(stake * mult),
+    status: 'active',
+    placedAt: now(),
+    settledAt: null
+  };
+
+  S.balance -= stake;
+  S.bets.unshift(bet);
+  S.stats.bets++;
+  S.stats.wagered += stake;
+  S.stats.biggestStake = Math.max(S.stats.biggestStake, stake);
+  pushHistory();
+  save();
+
+  closeSlip();
+  toast('Bet placed · ' + fmt(stake) + ' 🪙 to win ' + fmt(bet.toWin), 'good');
+  if (stake >= 750) addFeed({ user:S.profile.name, avatar:S.profile.avatar, me:true,
+    text:'just slammed ' + fmt(stake) + ' coins on ' + bet.label + ' (' + bet.matchup + '). Pray for them.', kind:'bet' });
+  checkBadges();
+  renderAll();
+}
+
+function settleBets(){
+  let changed = false;
+  for (const b of S.bets){
+    if (b.status !== 'active') continue;
+    const g = S.games.find(x => x.id === b.gameId);
+    if (!g){                       // game fell off the board — refund, never strand a ticket
+      b.status = 'push'; b.settledAt = now();
+      S.balance += b.stake; S.stats.pushes++; changed = true;
+      continue;
+    }
+    if (!isFinal(g)) continue;
+
+    const sc = finalScore(g);
+    const res = gradeBet(b, sc, g);
+    b.settledAt = now();
+    b.finalHome = sc.home; b.finalAway = sc.away;
+
+    if (res === 'push'){
+      b.status = 'push';
+      S.balance += b.stake;
+      S.stats.pushes++;
+    } else if (res === 'won'){
+      b.status = 'won';
+      S.balance += b.payout;
+      S.stats.wins++;
+      S.stats.returned += b.payout;
+      S.stats.profit += b.toWin;
+      S.stats.streak = Math.max(0, S.stats.streak) + 1;
+      S.stats.bestStreak = Math.max(S.stats.bestStreak, S.stats.streak);
+      S.stats.biggestWin = Math.max(S.stats.biggestWin, b.toWin);
+      if (b.odds >= 150) S.stats.dogWin = true;
+      toast('WINNER! +' + fmt(b.payout) + ' 🪙 · ' + b.label, 'good', 4200);
+      confetti();
+      if (b.toWin >= 400) addFeed({ user:S.profile.name, avatar:S.profile.avatar, me:true,
+        text:'cashed ' + b.label + ' for ' + fmt(b.payout) + ' coins. ' + (b.odds>0?'Dog money.':'Chalk is chalk.'), kind:'win', amount:b.payout });
+    } else {
+      b.status = 'lost';
+      S.stats.losses++;
+      S.stats.profit -= b.stake;
+      S.stats.streak = 0;
+      toast('Lost · ' + b.label + ' (−' + fmt(b.stake) + ' 🪙)', 'bad', 3600);
+    }
+    S.stats.peakBalance = Math.max(S.stats.peakBalance, S.balance);
+    changed = true;
+  }
+  if (changed){ pushHistory(); checkBadges(); save(); }
+  return changed;
+}
+
+function gradeBet(b, sc, g){
+  if (b.type === 'ml'){
+    if (sc.home === sc.away) return 'push';
+    const winner = sc.home > sc.away ? 'home' : 'away';
+    return b.side === winner ? 'won' : 'lost';
+  }
+  if (b.type === 'spread'){
+    const mine  = b.side === 'home' ? sc.home : sc.away;
+    const other = b.side === 'home' ? sc.away : sc.home;
+    const adj = mine + b.line;
+    if (adj === other) return 'push';
+    return adj > other ? 'won' : 'lost';
+  }
+  if (b.type === 'total'){
+    const tot = sc.home + sc.away;
+    if (tot === b.line) return 'push';
+    return (b.side === 'over' ? tot > b.line : tot < b.line) ? 'won' : 'lost';
+  }
+  return 'lost';
+}
+
+/* ---------------- balance helpers ---------------- */
+const bonusReady  = () => S.balance <= 0 || (now() - S.lastBonus) > BONUS_COOLDOWN;
+const bonusLeftMs = () => BONUS_COOLDOWN - (now() - S.lastBonus);
+
+function claimBonus(){
+  if (!bonusReady()) return toast('Next bonus in ' + countdown(bonusLeftMs()), 'bad');
+  const broke = S.balance <= 0;
+  const amt = broke ? DAILY_BONUS + 250 : DAILY_BONUS;
+  S.balance += amt;
+  S.lastBonus = now();
+  if (broke) S.stats.bailouts++;
+  S.stats.peakBalance = Math.max(S.stats.peakBalance, S.balance);
+  pushHistory(); checkBadges(); save();
+  toast('+' + fmt(amt) + ' 🪙 ' + (broke ? 'bailout' : 'daily bonus') + ' claimed!', 'good');
+  confetti();
+  renderAll();
+}
+
+function hardReset(){
+  confirmModal('Reset everything?', 'Wipes your balance, bets, history and stats back to a fresh ' + fmt(START_BALANCE) + ' coin account. This cannot be undone.', 'Reset account', () => {
+    S = freshState();
+    ui.lastBalance = S.balance;
+    save(); renderAll();
+    toast('Fresh account · ' + fmt(START_BALANCE) + ' 🪙', 'good');
+  });
+}
+
+/* ---------------- stats derived ---------------- */
+function derived(){
+  const st = S.stats;
+  const settled = st.wins + st.losses;
+  const active  = S.bets.filter(b => b.status === 'active');
+  return {
+    settled,
+    winRate: settled ? (st.wins/settled*100) : 0,
+    ratio: st.wins + ':' + st.losses,
+    atRisk: active.reduce((a,b)=>a+b.stake,0),
+    toWin: active.reduce((a,b)=>a+b.toWin,0),
+    active,
+    roi: st.wagered ? (st.profit/st.wagered*100) : 0
+  };
+}
+
+/* ---------------- badges ---------------- */
+function unlockedBadges(){ return BADGES.filter(b => { try { return !!b.test(S); } catch(e){ return false; } }); }
+function checkBadges(){
+  for (const b of unlockedBadges()){
+    if (!S.seenBadges.includes(b.id)){
+      S.seenBadges.push(b.id);
+      setTimeout(() => toast('Badge unlocked ' + b.icon + ' ' + b.name, 'gold', 4000), 500);
+    }
+  }
+}
+
+/* ---------------- social feed ---------------- */
+function seedFeed(){
+  const out = [];
+  const lines = [
+    ['hit a 4-leg parlay for {amt} coins. Never doubted it.', 'win'],
+    ['lost {amt} on a backdoor cover. I am fine. Everything is fine.', 'loss'],
+    ['tailing the under tonight, books are begging me to take the over.', 'post'],
+    ['{amt} coin cash on the underdog moneyline. Dogs eat.', 'win'],
+    ['took the home side and the crowd took my rent money.', 'loss'],
+    ['first bet on SpankBet, up {amt} already. Uh oh.', 'win'],
+    ['anyone else fading the public today or just me?', 'post'],
+    ['bagged {amt} coins on a late free throw. Heart rate: 190.', 'win']
+  ];
+  for (let i=0;i<8;i++){
+    const [name, av] = BOT_NAMES[i % BOT_NAMES.length];
+    const [txt, kind] = lines[i % lines.length];
+    const amt = (1 + Math.floor(Math.random()*18)) * 100;
+    out.push({
+      id: uid(), user:name, avatar:av, me:false,
+      text: txt.replace('{amt}', fmt(amt)),
+      kind, amount: kind === 'post' ? 0 : amt,
+      t: now() - (i+1)*(3+Math.floor(Math.random()*9))*60000,
+      likes: Math.floor(Math.random()*40)+2, liked:false
+    });
+  }
+  return out;
+}
+
+function addFeed(p){
+  S.feed.unshift(Object.assign({ id:uid(), t:now(), likes: p.me ? Math.floor(Math.random()*6) : Math.floor(Math.random()*30)+3, liked:false, kind:'post', amount:0 }, p));
+  if (S.feed.length > 60) S.feed.length = 60;
+  save();
+}
+
+function botChatter(){
+  if (now() - S.lastFeedPush < 22000) return false;
+  S.lastFeedPush = now();
+  const [name, av] = pick(BOT_NAMES);
+  const g = pick(S.games);
+  const amt = (1 + Math.floor(Math.random()*24)) * 100;
+  const roll = Math.random();
+  let text, kind;
+  if (roll < .42){ kind='win';  text = 'just cashed ' + fmt(amt) + ' coins on ' + g.away.abbr + ' @ ' + g.home.abbr + '. Easiest money of the night.'; }
+  else if (roll < .72){ kind='loss'; text = 'dropped ' + fmt(amt) + ' coins on ' + g.home.name + '. I will never learn.'; }
+  else { kind='post'; text = pick([
+      'the ' + g.home.name + ' line moved 2 points, somebody knows something.',
+      'live betting ' + g.away.abbr + ' right now is free money, do not tell the books.',
+      'my bankroll is a rollercoaster and I refuse to get off.',
+      'taking ' + g.away.name + ' and going to bed. Good luck to me.',
+      'never bet on a team you love. Anyway, I bet on ' + g.home.name + '.'
+    ]); }
+  addFeed({ user:name, avatar:av, me:false, text, kind, amount: kind==='post'?0:amt });
+  return true;
+}
+
+/* ---------------- leaderboard ---------------- */
+function seedBoard(){
+  return BOT_NAMES.map(([name, av], i) => ({
+    name, avatar: av,
+    coins: Math.round(24000 - i*1450 + Math.random()*1200),
+    w: 30 + Math.floor(Math.random()*90),
+    l: 20 + Math.floor(Math.random()*80),
+    drift: Math.random()*6.283
+  }));
+}
+function boardRows(){
+  const t = now()/1000;
+  const rows = S.board.map(b => ({
+    name:b.name, avatar:b.avatar, me:false,
+    coins: Math.max(200, Math.round(b.coins + Math.sin(t/37 + b.drift)*b.coins*0.05)),
+    w:b.w, l:b.l
+  }));
+  const st = S.stats;
+  rows.push({ name:S.profile.name, avatar:S.profile.avatar, me:true, coins:Math.round(S.balance + derived().atRisk), w:st.wins, l:st.losses });
+  rows.sort((a,b) => b.coins - a.coins);
+  return rows;
+}
+
+/* ================================================================
+   RENDERING
+================================================================= */
+const TABS = [
+  ['home',   'Home',   '🏠'],
+  ['games',  'Games',  '📺'],
+  ['feed',   'Feed',   '💬'],
+  ['ranks',  'Ranks',  '🏆'],
+  ['profile','Profile','👤']
+];
+
+function renderTabs(){
+  const bar = $('#tabbar');
+  bar.innerHTML = TABS.map(([id,label,icon]) => `
+    <button data-tab="${id}" class="press flex flex-col items-center gap-1 py-2.5 ${ui.tab===id?'tab-active':'text-slate-500'}">
+      <span class="tab-ico text-[19px] leading-none">${icon}</span>
+      <span class="text-[10px] font-semibold tracking-wide">${label}</span>
+    </button>`).join('');
+  bar.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => go(b.dataset.tab));
+}
+
+function go(tab){
+  if (ui.tab === tab) { $('#main').scrollIntoView({behavior:'smooth', block:'start'}); return; }
+  ui.tab = tab;
+  ui.animate = true;
+  renderTabs(); renderMain();
+  ui.animate = false;
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+function renderBalance(pop){
+  const t = $('#balanceText');
+  t.textContent = fmt(S.balance);
+  if (pop){ t.classList.remove('coin-pop'); void t.offsetWidth; t.classList.add('coin-pop'); }
+}
+
+function renderAll(){
+  ui.animate = true;
+  renderTabs(); renderBalance(true); renderMain();
+  ui.animate = false;
+}
+
+function renderMain(){
+  const m = $('#main');
+  const scrollY = window.scrollY;
+  const animate = !!ui.animate;
+  m.innerHTML = '';
+  const view = el('div', animate ? 'view' : '');
+  view.innerHTML = ({
+    home: viewHome, games: viewGames, feed: viewFeed, ranks: viewRanks, profile: viewProfile
+  }[ui.tab] || viewHome)();
+  // entrance animations only on navigation, never on the 1s refresh tick
+  if (!animate) view.querySelectorAll('.stagger').forEach(n => n.classList.remove('stagger'));
+  m.appendChild(view);
+  wireMain();
+  if (!animate && scrollY > 0) window.scrollTo(0, scrollY);
+}
+
+/* ---------- shared partials ---------- */
+function teamDot(t, size='h-8 w-8'){
+  return `<div class="${size} shrink-0 rounded-xl grid place-items-center text-[11px] font-black border border-white/10"
+            style="background:linear-gradient(145deg, ${t.color}, ${t.color}99); color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.5)">${esc(t.abbr)}</div>`;
+}
+
+function statusChip(g){
+  if (isFinal(g)) return `<span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Final</span>`;
+  if (isLive(g))  return `<span class="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-flame">
+      <span class="live-dot h-1.5 w-1.5 rounded-full bg-flame"></span>Live · ${clockLabel(g)}</span>`;
+  return `<span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">${countdown(g.startsAt-now())}</span>`;
+}
+
+function oddsButton(g, m, compact){
+  const selected = ui.slip && ui.slip.gameId === g.id && ui.slip.market.type === m.type && ui.slip.market.side === m.side;
+  const dead = isFinal(g);
+  return `<button ${dead?'disabled':''} data-bet="${g.id}" data-type="${m.type}" data-side="${m.side}"
+    class="odd-btn ${selected?'odd-sel':''} ${dead?'opacity-35':''} flex-1 rounded-xl border border-white/10 bg-ink-600/70 px-2 ${compact?'py-2':'py-2.5'} text-center">
+      <div class="text-[11px] text-slate-400 leading-tight truncate">${esc(m.label)}</div>
+      <div class="font-black tabular-nums text-[14px] ${m.odds>0?'text-neon':'text-slate-100'}">${fmtAmerican(m.odds)}</div>
+   </button>`;
+}
+
+function gameCard(g, compact){
+  const sc = scoreOf(g);
+  const live = isLive(g), fin = isFinal(g);
+  const ms = marketsFor(g);
+  const mlAway = ms[0], mlHome = ms[1];
+  const rest = ms.slice(2);
+  const winHome = fin && sc.home > sc.away, winAway = fin && sc.away > sc.home;
+
+  return `
+  <section class="card p-3.5">
+    <div class="flex items-center justify-between mb-2.5">
+      <div class="flex items-center gap-1.5 text-[11px] font-bold text-slate-400">
+        <span>${LEAGUES[g.league].icon}</span><span class="uppercase tracking-wider">${LEAGUES[g.league].name}</span>
+      </div>
+      ${statusChip(g)}
+    </div>
+
+    <div class="space-y-2">
+      <div class="flex items-center gap-2.5">
+        ${teamDot(g.away)}
+        <div class="min-w-0 flex-1">
+          <div class="font-bold text-[14px] truncate ${winAway?'text-neon':''}">${esc(g.away.name)}</div>
+          <div class="text-[11px] text-slate-500">${esc(g.away.rec)}</div>
+        </div>
+        ${(live||fin) ? `<div class="font-black tabular-nums text-[19px] ${winAway?'text-neon':'text-slate-100'}">${g.league==='UFC'?(sc.away?'W':'—'):sc.away}</div>` : ''}
+      </div>
+      <div class="flex items-center gap-2.5">
+        ${teamDot(g.home)}
+        <div class="min-w-0 flex-1">
+          <div class="font-bold text-[14px] truncate ${winHome?'text-neon':''}">${esc(g.home.name)}</div>
+          <div class="text-[11px] text-slate-500">${esc(g.home.rec)}</div>
+        </div>
+        ${(live||fin) ? `<div class="font-black tabular-nums text-[19px] ${winHome?'text-neon':'text-slate-100'}">${g.league==='UFC'?(sc.home?'W':'—'):sc.home}</div>` : ''}
+      </div>
+    </div>
+
+    ${live ? `<div class="mt-3 h-1 rounded-full bg-ink-500 overflow-hidden">
+        <div class="h-full rounded-full bg-gradient-to-r from-flame to-gold transition-all duration-500" style="width:${(progressOf(g)*100).toFixed(1)}%"></div>
+      </div>` : ''}
+
+    <div class="mt-3 flex gap-2">${oddsButton(g, mlAway)}${oddsButton(g, mlHome)}</div>
+    ${(!compact && rest.length) ? `<div class="mt-2 grid grid-cols-2 gap-2">${rest.map(m=>oddsButton(g,m,true)).join('')}</div>` : ''}
+  </section>`;
+}
+
+function betRow(b){
+  const g = S.games.find(x => x.id === b.gameId);
+  const tone = { active:'text-gold', won:'text-neon', lost:'text-flame', push:'text-slate-400' }[b.status];
+  const badge = { active:'PENDING', won:'WON', lost:'LOST', push:'PUSH' }[b.status];
+  const ring  = { active:'border-gold/30 bg-gold/5', won:'border-neon/30 bg-neon/5', lost:'border-flame/25 bg-flame/5', push:'border-white/10 bg-white/5' }[b.status];
+  let live = '';
+  if (b.status === 'active' && g){
+    const sc = scoreOf(g);
+    live = isLive(g)
+      ? `<span class="text-flame">${g.away.abbr} ${sc.away} – ${sc.home} ${g.home.abbr} · ${clockLabel(g)}</span>`
+      : isPre(g) ? `<span class="text-slate-500">Starts in ${countdown(g.startsAt-now())}</span>`
+      : `<span class="text-slate-500">Settling…</span>`;
+  } else if (b.finalHome != null){
+    live = `<span class="text-slate-500">Final ${b.finalAway} – ${b.finalHome}</span>`;
+  }
+  const delta = b.status === 'won' ? '+'+fmt(b.payout) : b.status === 'lost' ? '−'+fmt(b.stake) : b.status === 'push' ? '±0' : fmt(b.stake)+' risk';
+
+  return `
+  <div class="rounded-2xl border ${ring} p-3">
+    <div class="flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <div class="flex items-center gap-2">
+          <span class="text-[11px]">${LEAGUES[b.league].icon}</span>
+          <span class="font-bold text-[13.5px] truncate">${esc(b.label)}</span>
+          <span class="text-[10px] font-black tracking-wider ${tone}">${badge}</span>
+        </div>
+        <div class="text-[11.5px] text-slate-500 mt-0.5 truncate">${esc(b.sub)} ${fmtAmerican(b.odds)} · ${esc(b.matchup)}</div>
+        <div class="text-[11.5px] mt-1">${live}</div>
+      </div>
+      <div class="text-right shrink-0">
+        <div class="font-black tabular-nums ${tone} text-[15px]">${delta}</div>
+        <div class="text-[10.5px] text-slate-500">${b.status==='active' ? 'to win '+fmt(b.toWin) : timeAgo(b.settledAt||b.placedAt)}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function empty(icon, title, sub){
+  return `<div class="card p-8 text-center">
+    <div class="text-3xl mb-2">${icon}</div>
+    <div class="font-bold">${esc(title)}</div>
+    <div class="text-[12.5px] text-slate-500 mt-1">${esc(sub)}</div>
+  </div>`;
+}
+
+/* ---------- HOME ---------- */
+function viewHome(){
+  const d = derived();
+  const st = S.stats;
+  const liveGames = S.games.filter(isLive);
+  const next = S.games.filter(isPre).sort((a,b)=>a.startsAt-b.startsAt).slice(0,2);
+  const recent = S.bets.filter(b => b.status !== 'active').slice(0,4);
+  const ready = bonusReady();
+
+  return `
+  <div class="space-y-4 stagger">
+
+    <!-- Balance hero -->
+    <section class="card p-5 relative overflow-hidden">
+      <div class="absolute -top-16 -right-10 h-44 w-44 rounded-full bg-neon/10 blur-3xl"></div>
+      <div class="relative">
+        <div class="text-[11px] uppercase tracking-[.18em] text-slate-500 font-semibold">Spank Coin Balance</div>
+        <div class="mt-1 flex items-end gap-2">
+          <span class="text-[42px] leading-none font-black tabular-nums bg-gradient-to-br from-white to-slate-400 bg-clip-text text-transparent">${fmt(S.balance)}</span>
+          <span class="text-2xl mb-1">🪙</span>
+        </div>
+        <div class="mt-1 text-[12px] ${st.profit>=0?'text-neon':'text-flame'} font-semibold tabular-nums">
+          ${st.profit>=0?'▲':'▼'} ${fmt(Math.abs(st.profit))} lifetime ${st.profit>=0?'profit':'loss'}
+          <span class="text-slate-500 font-normal">· ${fmt(d.atRisk)} at risk</span>
+        </div>
+
+        <div class="mt-4 flex gap-2">
+          <button id="bonusBtn" class="press flex-1 rounded-xl px-3 py-3 font-bold text-[13px] ${ready
+            ? 'bg-gradient-to-r from-neon to-emerald-500 text-ink-900 shadow-lg shadow-neon/20'
+            : 'bg-ink-600 text-slate-400 border border-white/10'}">
+            ${ready ? (S.balance<=0 ? '🩹 Claim bailout +'+fmt(DAILY_BONUS+250) : '🎁 Daily bonus +'+fmt(DAILY_BONUS)) : '⏳ Bonus in '+countdown(bonusLeftMs())}
+          </button>
+          <button id="toGames" class="press rounded-xl px-4 py-3 font-bold text-[13px] bg-ink-600 border border-white/10">Bet now</button>
+        </div>
+        ${S.balance<=0 ? `<div class="mt-2 text-[11.5px] text-gold">You're tapped out — grab the bailout, it's free.</div>` : ''}
+      </div>
+    </section>
+
+    <!-- Quick stats -->
+    <section class="grid grid-cols-3 gap-2.5">
+      ${statTile('Record', st.wins+'-'+st.losses, d.settled? fmt1(d.winRate)+'% win' : 'no settled bets')}
+      ${statTile('Profit', (st.profit>=0?'+':'−')+fmt(Math.abs(st.profit)), 'ROI '+(d.roi>=0?'+':'')+fmt1(d.roi)+'%', st.profit>=0?'text-neon':'text-flame')}
+      ${statTile('Streak', st.streak>0? st.streak+'W' : '—', 'best '+st.bestStreak+'W', st.streak>0?'text-gold':'')}
+    </section>
+
+    <!-- Active bets -->
+    <section>
+      <div class="flex items-center justify-between mb-2 px-1">
+        <h2 class="font-black text-[15px]">Active Bets ${d.active.length?`<span class="text-slate-500 font-bold">(${d.active.length})</span>`:''}</h2>
+        ${d.active.length? `<span class="text-[11.5px] text-slate-500 tabular-nums">${fmt(d.atRisk)} risk → ${fmt(d.toWin)} win</span>`:''}
+      </div>
+      ${d.active.length
+        ? `<div class="space-y-2">${d.active.map(betRow).join('')}</div>`
+        : empty('🎫','No live tickets','Pick a game below and get some action.')}
+    </section>
+
+    <!-- Live now -->
+    ${liveGames.length ? `
+    <section>
+      <div class="flex items-center justify-between mb-2 px-1">
+        <h2 class="font-black text-[15px]">Live Now</h2>
+        <button data-goto="games" class="text-[11.5px] font-bold text-neon press">All games →</button>
+      </div>
+      <div class="space-y-3">${liveGames.slice(0,2).map(g=>gameCard(g,true)).join('')}</div>
+    </section>` : ''}
+
+    <!-- Upcoming -->
+    ${next.length ? `
+    <section>
+      <div class="flex items-center justify-between mb-2 px-1">
+        <h2 class="font-black text-[15px]">Starting Soon</h2>
+        <button data-goto="games" class="text-[11.5px] font-bold text-neon press">Board →</button>
+      </div>
+      <div class="space-y-3">${next.map(g=>gameCard(g,true)).join('')}</div>
+    </section>` : ''}
+
+    <!-- Recent results -->
+    <section>
+      <div class="flex items-center justify-between mb-2 px-1">
+        <h2 class="font-black text-[15px]">Recent Results</h2>
+        <button data-goto="profile" class="text-[11.5px] font-bold text-neon press">Full history →</button>
+      </div>
+      ${recent.length ? `<div class="space-y-2">${recent.map(betRow).join('')}</div>`
+        : empty('📭','Nothing settled yet','Your graded tickets land here.')}
+    </section>
+  </div>`;
+}
+
+function statTile(label, value, sub, tone){
+  return `<div class="card p-3">
+    <div class="text-[10px] uppercase tracking-[.14em] text-slate-500 font-semibold">${esc(label)}</div>
+    <div class="font-black text-[19px] tabular-nums mt-1 ${tone||''}">${esc(value)}</div>
+    <div class="text-[10.5px] text-slate-500 mt-0.5 truncate">${esc(sub)}</div>
+  </div>`;
+}
+
+/* ---------- GAMES ---------- */
+function viewGames(){
+  const leagues = ['ALL', ...Object.keys(LEAGUES)];
+  const list = S.games
+    .filter(g => ui.gamesFilter === 'ALL' || g.league === ui.gamesFilter)
+    .slice()
+    .sort((a,b) => {
+      const rank = g => isLive(g) ? 0 : isPre(g) ? 1 : 2;
+      return rank(a) - rank(b) || a.startsAt - b.startsAt;
+    });
+
+  const liveCount = S.games.filter(isLive).length;
+
+  return `
+  <div class="space-y-4">
+    <div class="flex items-center justify-between px-1">
+      <h1 class="font-black text-[22px] tracking-tight">Scoreboard</h1>
+      <div class="text-[11.5px] text-slate-500">${liveCount} live · ${S.games.filter(isPre).length} upcoming</div>
+    </div>
+
+    <div class="no-scrollbar -mx-4 px-4 flex gap-2 overflow-x-auto pb-1">
+      ${leagues.map(l => `
+        <button data-league="${l}" class="press shrink-0 rounded-full px-3.5 py-2 text-[12px] font-bold border
+          ${ui.gamesFilter===l ? 'bg-neon text-ink-900 border-neon' : 'bg-ink-700/70 text-slate-300 border-white/10'}">
+          ${l==='ALL'?'All':LEAGUES[l].icon+' '+LEAGUES[l].name}
+        </button>`).join('')}
+    </div>
+
+    <div class="space-y-3 stagger">
+      ${list.length ? list.map(g=>gameCard(g,false)).join('') : empty('📺','No games here','Try another league filter.')}
+    </div>
+
+    <p class="text-center text-[11px] text-slate-600 pt-2 pb-6">
+      Simulated matchups. Spank Coins have no cash value and can't be bought or withdrawn.
+    </p>
+  </div>`;
+}
+
+/* ---------- FEED ---------- */
+function viewFeed(){
+  const filters = [['all','All'],['win','Big wins'],['me','My posts']];
+  const posts = S.feed.filter(p =>
+    ui.feedFilter === 'all' ? true : ui.feedFilter === 'me' ? p.me : p.kind === 'win');
+
+  return `
+  <div class="space-y-4">
+    <div class="flex items-center justify-between px-1">
+      <h1 class="font-black text-[22px] tracking-tight">Feed</h1>
+      <button id="brag" class="press rounded-full bg-ink-600 border border-white/10 px-3 py-1.5 text-[12px] font-bold">✍️ Post</button>
+    </div>
+
+    <div class="flex gap-2">
+      ${filters.map(([k,label]) => `
+        <button data-feed="${k}" class="press rounded-full px-3.5 py-2 text-[12px] font-bold border
+          ${ui.feedFilter===k ? 'bg-violet text-white border-violet' : 'bg-ink-700/70 text-slate-300 border-white/10'}">${label}</button>`).join('')}
+    </div>
+
+    <div class="space-y-3 stagger">
+      ${posts.length ? posts.map(feedCard).join('') : empty('💬','Nothing here yet','Win something worth bragging about.')}
+    </div>
+  </div>`;
+}
+
+function feedCard(p){
+  const tone = p.kind === 'win' ? 'text-neon' : p.kind === 'loss' ? 'text-flame' : 'text-slate-400';
+  return `
+  <article class="card p-3.5 ${p.me?'ring-1 ring-neon/25':''}">
+    <div class="flex gap-3">
+      <div class="h-10 w-10 shrink-0 rounded-full bg-ink-500 grid place-items-center text-[19px] border border-white/10">${p.avatar}</div>
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center gap-2">
+          <span class="font-bold text-[13.5px] truncate">${esc(p.user)}</span>
+          ${p.me?'<span class="text-[9.5px] font-black bg-neon/15 text-neon px-1.5 py-0.5 rounded">YOU</span>':''}
+          <span class="text-[11px] text-slate-500 ml-auto shrink-0">${timeAgo(p.t)}</span>
+        </div>
+        <p class="text-[13.5px] text-slate-300 mt-1 leading-snug">${esc(p.text)}</p>
+        ${p.amount ? `<div class="mt-2 inline-flex items-center gap-1.5 rounded-lg ${p.kind==='win'?'bg-neon/10':'bg-flame/10'} px-2 py-1 text-[11.5px] font-bold ${tone}">
+            ${p.kind==='win'?'▲ +':'▼ −'}${fmt(p.amount)} 🪙</div>` : ''}
+        <div class="mt-2 flex items-center gap-4">
+          <button data-like="${p.id}" class="press flex items-center gap-1.5 text-[12px] font-semibold ${p.liked?'text-flame':'text-slate-500'}">
+            ${p.liked?'❤️':'🤍'} <span class="tabular-nums">${p.likes}</span>
+          </button>
+          <span class="text-[12px] text-slate-600">💬 ${Math.max(0,(p.likes%7))}</span>
+        </div>
+      </div>
+    </div>
+  </article>`;
+}
+
+/* ---------- RANKS ---------- */
+function viewRanks(){
+  const rows = boardRows();
+  const myIdx = rows.findIndex(r => r.me);
+  const top3 = rows.slice(0,3);
+
+  return `
+  <div class="space-y-4">
+    <div class="px-1">
+      <h1 class="font-black text-[22px] tracking-tight">Leaderboard</h1>
+      <p class="text-[12px] text-slate-500 mt-0.5">Ranked by total Spank Coins (balance + coins at risk).</p>
+    </div>
+
+    <section class="card p-4">
+      <div class="grid grid-cols-3 gap-2 items-end">
+        ${[1,0,2].map(i => {
+          const r = top3[i]; if (!r) return '<div></div>';
+          const place = i+1;
+          const h = place===1 ? 'h-24' : place===2 ? 'h-16' : 'h-12';
+          const c = place===1 ? 'from-gold to-amber-600' : place===2 ? 'from-slate-300 to-slate-500' : 'from-amber-700 to-amber-900';
+          return `<div class="flex flex-col items-center">
+            <div class="h-12 w-12 rounded-full bg-ink-500 grid place-items-center text-[22px] border border-white/10 mb-1.5">${r.avatar}</div>
+            <div class="text-[11.5px] font-bold truncate max-w-full ${r.me?'text-neon':''}">${esc(r.name)}</div>
+            <div class="text-[11px] tabular-nums text-gold font-black">${fmt(r.coins)}</div>
+            <div class="mt-1.5 w-full ${h} rounded-t-xl bg-gradient-to-b ${c} grid place-items-start justify-center pt-1.5 text-ink-900 font-black">${place}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </section>
+
+    <section class="card overflow-hidden divide-y divide-white/5 stagger">
+      ${rows.map((r,i) => `
+        <div class="flex items-center gap-3 px-3.5 py-3 ${r.me?'bg-neon/10':''}">
+          <div class="w-6 text-center font-black tabular-nums text-[13px] ${i<3?'text-gold':'text-slate-500'}">${i+1}</div>
+          <div class="h-9 w-9 rounded-full bg-ink-500 grid place-items-center text-[17px] border border-white/10">${r.avatar}</div>
+          <div class="min-w-0 flex-1">
+            <div class="font-bold text-[13.5px] truncate ${r.me?'text-neon':''}">${esc(r.name)}${r.me?' <span class="text-[9.5px] bg-neon/15 text-neon px-1.5 py-0.5 rounded align-middle">YOU</span>':''}</div>
+            <div class="text-[11px] text-slate-500">${r.w}W · ${r.l}L${(r.w+r.l)?' · '+fmt1(r.w/(r.w+r.l)*100)+'%':''}</div>
+          </div>
+          <div class="text-right">
+            <div class="font-black tabular-nums text-[14px] text-gold">${fmt(r.coins)}</div>
+            <div class="text-[10px] text-slate-500">coins</div>
+          </div>
+        </div>`).join('')}
+    </section>
+
+    <div class="card p-4 text-center">
+      <div class="text-[12px] text-slate-400">You're rank <span class="font-black text-neon">#${myIdx+1}</span> of ${rows.length}</div>
+      ${myIdx > 0 ? `<div class="text-[11.5px] text-slate-500 mt-1">${fmt(rows[myIdx-1].coins - rows[myIdx].coins)} coins behind ${esc(rows[myIdx-1].name)}</div>`
+                  : `<div class="text-[11.5px] text-gold mt-1">Top of the board. Don't get cute.</div>`}
+    </div>
+  </div>`;
+}
+
+/* ---------- PROFILE ---------- */
+function viewProfile(){
+  const st = S.stats, d = derived();
+  const unlocked = unlockedBadges().map(b=>b.id);
+  const settledBets = S.bets.filter(b => b.status !== 'active');
+
+  return `
+  <div class="space-y-4 stagger">
+
+    <section class="card p-5 text-center relative overflow-hidden">
+      <div class="absolute -top-20 left-1/2 -translate-x-1/2 h-40 w-40 rounded-full bg-violet/15 blur-3xl"></div>
+      <div class="relative">
+        <button id="editAvatar" class="press mx-auto h-20 w-20 rounded-2xl bg-ink-500 grid place-items-center text-[40px] border border-white/10 shadow-xl">
+          ${S.profile.avatar}
+        </button>
+        <div class="mt-3 flex items-center justify-center gap-2">
+          <h1 class="font-black text-[20px]">${esc(S.profile.name)}</h1>
+          <button id="editName" class="press text-slate-500 text-[13px]">✏️</button>
+        </div>
+        <p class="text-[12px] text-slate-500 mt-1">Member since ${new Date(S.profile.joined).toLocaleDateString('en-US',{month:'short', year:'numeric'})} · Rank #${boardRows().findIndex(r=>r.me)+1}</p>
+        <div class="mt-4 grid grid-cols-3 gap-2 text-center">
+          <div><div class="font-black text-[17px] tabular-nums">${st.bets}</div><div class="text-[10px] uppercase tracking-wider text-slate-500">Bets</div></div>
+          <div><div class="font-black text-[17px] tabular-nums text-neon">${fmt1(d.winRate)}%</div><div class="text-[10px] uppercase tracking-wider text-slate-500">Win rate</div></div>
+          <div><div class="font-black text-[17px] tabular-nums ${st.profit>=0?'text-neon':'text-flame'}">${st.profit>=0?'+':'−'}${fmt(Math.abs(st.profit))}</div><div class="text-[10px] uppercase tracking-wider text-slate-500">Profit</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Balance graph -->
+    <section class="card p-4">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="font-black text-[15px]">Bankroll History</h2>
+        <span class="text-[11px] text-slate-500">${S.history.length} points</span>
+      </div>
+      ${sparkline()}
+      <div class="mt-3 grid grid-cols-3 gap-2 text-center">
+        <div><div class="text-[10px] uppercase tracking-wider text-slate-500">Peak</div><div class="font-bold tabular-nums text-gold">${fmt(st.peakBalance)}</div></div>
+        <div><div class="text-[10px] uppercase tracking-wider text-slate-500">Wagered</div><div class="font-bold tabular-nums">${fmt(st.wagered)}</div></div>
+        <div><div class="text-[10px] uppercase tracking-wider text-slate-500">Biggest win</div><div class="font-bold tabular-nums text-neon">${fmt(st.biggestWin)}</div></div>
+      </div>
+    </section>
+
+    <!-- Badges -->
+    <section class="card p-4">
+      <h2 class="font-black text-[15px] mb-3">Badges <span class="text-slate-500">${unlocked.length}/${BADGES.length}</span></h2>
+      <div class="grid grid-cols-2 gap-2.5">
+        ${BADGES.map(b => {
+          const on = unlocked.includes(b.id);
+          return `<div class="rounded-xl border p-2.5 flex gap-2.5 items-center ${on?'border-gold/30 bg-gold/10':'border-white/10 bg-ink-600/50 opacity-55'}">
+            <div class="text-[22px] ${on?'':'grayscale'}">${b.icon}</div>
+            <div class="min-w-0">
+              <div class="font-bold text-[12.5px] truncate ${on?'text-gold':''}">${b.name}</div>
+              <div class="text-[10.5px] text-slate-500 leading-tight">${b.desc}</div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </section>
+
+    <!-- History -->
+    <section>
+      <div class="flex items-center justify-between mb-2 px-1">
+        <h2 class="font-black text-[15px]">Betting History</h2>
+        <span class="text-[11.5px] text-slate-500">${settledBets.length} settled</span>
+      </div>
+      ${settledBets.length ? `<div class="space-y-2">${settledBets.slice(0,25).map(betRow).join('')}</div>`
+        : empty('🗂️','No history yet','Settled tickets show up here with results.')}
+    </section>
+
+    <!-- Account -->
+    <section class="card p-4 space-y-2">
+      <h2 class="font-black text-[15px] mb-1">Account</h2>
+      <button id="claimBtn2" class="press w-full rounded-xl bg-ink-600 border border-white/10 px-4 py-3 text-left">
+        <div class="font-bold text-[13.5px]">🎁 Claim coins</div>
+        <div class="text-[11.5px] text-slate-500">${bonusReady()?'Bonus available now':'Next bonus in '+countdown(bonusLeftMs())}</div>
+      </button>
+      <button id="resetBtn" class="press w-full rounded-xl bg-flame/10 border border-flame/25 px-4 py-3 text-left">
+        <div class="font-bold text-[13.5px] text-flame">♻️ Reset account</div>
+        <div class="text-[11.5px] text-slate-500">Wipe everything, start at ${fmt(START_BALANCE)} coins</div>
+      </button>
+      <p class="text-[11px] text-slate-600 pt-1 leading-relaxed">
+        Spank Coins are play money with no cash value. Nothing here can be purchased, cashed out, or traded. Games and users are simulated.
+      </p>
+    </section>
+  </div>`;
+}
+
+function sparkline(){
+  const pts = S.history.slice(-40);
+  if (pts.length < 2) return `<div class="h-28 grid place-items-center text-[12px] text-slate-600">Place a few bets to build your chart.</div>`;
+  const vals = pts.map(p=>p.balance);
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const span = (max-min) || 1;
+  const W = 300, H = 96;
+  const xy = vals.map((v,i) => [ (i/(vals.length-1))*W, H - ((v-min)/span)*(H-10) - 5 ]);
+  const line = xy.map(([x,y],i) => (i?'L':'M')+x.toFixed(1)+' '+y.toFixed(1)).join(' ');
+  const area = line + ` L ${W} ${H} L 0 ${H} Z`;
+  const up = vals[vals.length-1] >= vals[0];
+  const c = up ? '#22e584' : '#ff5470';
+  return `
+  <svg viewBox="0 0 ${W} ${H}" class="w-full h-28" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${c}" stop-opacity=".35"/>
+        <stop offset="100%" stop-color="${c}" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <path d="${area}" fill="url(#sparkFill)"/>
+    <path d="${line}" fill="none" stroke="${c}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${xy[xy.length-1][0].toFixed(1)}" cy="${xy[xy.length-1][1].toFixed(1)}" r="4" fill="${c}"/>
+  </svg>
+  <div class="flex justify-between text-[10px] text-slate-600 mt-1">
+    <span>low ${fmt(min)}</span><span class="text-slate-500">balance over time</span><span>high ${fmt(max)}</span>
+  </div>`;
+}
+
+/* ---------- wiring ---------- */
+function wireMain(){
+  const m = $('#main');
+
+  m.querySelectorAll('[data-bet]').forEach(b => {
+    b.onclick = () => {
+      const g = S.games.find(x => x.id === b.dataset.bet);
+      if (!g) return;
+      const mk = marketsFor(g).find(x => x.type === b.dataset.type && x.side === b.dataset.side);
+      if (mk) openSlip(g.id, mk);
+    };
+  });
+  m.querySelectorAll('[data-goto]').forEach(b => b.onclick = () => go(b.dataset.goto));
+  m.querySelectorAll('[data-league]').forEach(b => b.onclick = () => { ui.gamesFilter = b.dataset.league; renderMain(); });
+  m.querySelectorAll('[data-feed]').forEach(b => b.onclick = () => { ui.feedFilter = b.dataset.feed; renderMain(); });
+  m.querySelectorAll('[data-like]').forEach(b => b.onclick = () => {
+    const p = S.feed.find(x => x.id === b.dataset.like); if (!p) return;
+    p.liked = !p.liked; p.likes += p.liked ? 1 : -1; save(); renderMain();
+  });
+
+  const bonus = $('#bonusBtn'); if (bonus) bonus.onclick = claimBonus;
+  const bonus2 = $('#claimBtn2'); if (bonus2) bonus2.onclick = claimBonus;
+  const toGames = $('#toGames'); if (toGames) toGames.onclick = () => go('games');
+  const reset = $('#resetBtn'); if (reset) reset.onclick = hardReset;
+  const en = $('#editName'); if (en) en.onclick = nameModal;
+  const ea = $('#editAvatar'); if (ea) ea.onclick = avatarModal;
+  const brag = $('#brag'); if (brag) brag.onclick = bragModal;
+}
+
+/* ---------------- bet slip sheet ---------------- */
+function renderSlip(){
+  const root = $('#slipRoot');
+  const slip = ui.slip;
+  if (!slip){ root.classList.add('hidden'); root.innerHTML=''; return; }
+  const g = S.games.find(x => x.id === slip.gameId);
+  if (!g) return closeSlip();
+
+  const mult   = americanToMult(slip.market.odds);
+  const stake  = clamp(Math.floor(slip.stake||0), 0, 10_000_000);
+  const payout = Math.round(stake * mult);
+  const profit = payout - stake;
+  const bad    = stake < MIN_BET || stake > S.balance;
+  const live   = isLive(g);
+  const sc     = scoreOf(g);
+
+  root.classList.remove('hidden');
+  root.innerHTML = `
+    <div id="sheetBackdrop" class="absolute inset-0 bg-black/65 transition-opacity duration-300"></div>
+    <div id="sheetPanel" class="sheet-in absolute bottom-0 inset-x-0 mx-auto max-w-[520px] rounded-t-[26px] border-t border-white/10 bg-ink-800 shadow-2xl safe-b">
+      <div class="flex justify-center pt-2.5 pb-1"><div class="h-1 w-10 rounded-full bg-white/15"></div></div>
+
+      <div class="px-5 pb-5">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="text-[11px] uppercase tracking-[.16em] text-slate-500 font-semibold">Bet Slip</div>
+            <div class="font-black text-[19px] truncate mt-0.5">${esc(slip.market.label)}</div>
+            <div class="text-[12px] text-slate-500 truncate">${esc(slip.market.sub)} · ${esc(g.away.name)} @ ${esc(g.home.name)}</div>
+            <div id="slipLive" class="text-[11.5px] mt-1">${live
+              ? `<span class="text-flame font-semibold">LIVE ${g.away.abbr} ${sc.away}–${sc.home} ${g.home.abbr} · ${clockLabel(g)}</span>`
+              : `<span class="text-slate-500">Starts in ${countdown(g.startsAt-now())}</span>`}</div>
+          </div>
+          <button id="closeSheet" class="press h-9 w-9 shrink-0 rounded-full bg-ink-600 border border-white/10 grid place-items-center text-slate-400">✕</button>
+        </div>
+
+        <div class="mt-4 flex items-center justify-between rounded-2xl bg-ink-700/70 border border-white/10 px-4 py-3">
+          <div>
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Odds</div>
+            <div class="font-black text-[18px] ${slip.market.odds>0?'text-neon':'text-slate-100'}">${fmtAmerican(slip.market.odds)}</div>
+          </div>
+          <div class="text-right">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Payout multiplier</div>
+            <div class="font-black text-[18px] tabular-nums text-gold">${mult.toFixed(2)}×</div>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Wager</label>
+            <span class="text-[11.5px] text-slate-500">Balance ${fmt(S.balance)} 🪙</span>
+          </div>
+          <div class="flex items-center gap-2 rounded-2xl border ${bad?'border-flame/40':'border-white/10'} bg-ink-700/70 px-4 py-3">
+            <span class="text-[20px]">🪙</span>
+            <input id="stakeInput" type="number" inputmode="numeric" min="${MIN_BET}" value="${stake||''}" size="1"
+              class="flex-1 min-w-0 w-full bg-transparent outline-none font-black text-[24px] tabular-nums placeholder-slate-600" placeholder="0" />
+            <button id="clearStake" class="press text-[11px] font-bold text-slate-500 px-2 py-1 rounded-lg bg-white/5">CLR</button>
+          </div>
+          <div class="mt-2 grid grid-cols-5 gap-2">
+            ${[25,100,250,500].map(v=>`<button data-stake="${v}" class="press rounded-xl bg-ink-600 border border-white/10 py-2 text-[12px] font-bold">+${v}</button>`).join('')}
+            <button data-stake="max" class="press rounded-xl bg-gold/15 border border-gold/30 text-gold py-2 text-[12px] font-black">MAX</button>
+          </div>
+        </div>
+
+        <div class="mt-4 rounded-2xl bg-gradient-to-br from-neon/10 to-transparent border border-neon/20 px-4 py-3">
+          <div class="flex items-center justify-between text-[12.5px]">
+            <span class="text-slate-400">Risk</span>
+            <span id="slipRisk" class="font-bold tabular-nums">${fmt(stake)} 🪙</span>
+          </div>
+          <div class="flex items-center justify-between text-[12.5px] mt-1">
+            <span class="text-slate-400">To win</span>
+            <span id="slipToWin" class="font-bold tabular-nums text-neon">+${fmt(Math.max(0,profit))} 🪙</span>
+          </div>
+          <div class="h-px bg-white/10 my-2"></div>
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-[13px]">Total payout</span>
+            <span id="slipPayout" class="font-black text-[22px] tabular-nums text-gold">${fmt(payout)} 🪙</span>
+          </div>
+        </div>
+
+        <div id="slipWarn" class="mt-2 text-[12px] text-flame font-semibold text-center h-4">${
+          stake > S.balance ? 'Not enough coins — you have ' + fmt(S.balance) + '.'
+          : (stake && stake < MIN_BET) ? 'Minimum bet is ' + MIN_BET + ' coins.' : ''}</div>
+
+        <button id="confirmBet" ${bad?'disabled':''}
+          class="press mt-4 w-full rounded-2xl py-4 font-black text-[15px] ${bad
+            ? 'bg-ink-600 text-slate-500 border border-white/10'
+            : 'bg-gradient-to-r from-neon to-emerald-500 text-ink-900 shadow-xl shadow-neon/25'}">
+          ${bad ? 'Enter a valid wager' : 'Confirm bet · ' + fmt(stake) + ' 🪙'}
+        </button>
+        <p class="text-center text-[10.5px] text-slate-600 mt-2.5">Virtual coins only. No real money is involved.</p>
+      </div>
+    </div>`;
+
+  $('#sheetBackdrop').onclick = closeSlip;
+  $('#closeSheet').onclick = closeSlip;
+  $('#confirmBet').onclick = placeBet;
+  $('#clearStake').onclick = () => { ui.slip.stake = 0; renderSlip(); $('#stakeInput').focus(); };
+
+  root.querySelectorAll('[data-stake]').forEach(b => b.onclick = () => {
+    const v = b.dataset.stake;
+    ui.slip.stake = v === 'max' ? Math.floor(S.balance) : clamp(Math.floor(ui.slip.stake||0) + Number(v), 0, Math.floor(S.balance));
+    renderSlip();
+  });
+
+  const input = $('#stakeInput');
+  input.oninput = () => {
+    const v = parseInt(input.value.replace(/\D/g,''), 10);
+    ui.slip.stake = Number.isFinite(v) ? v : 0;
+    updateSlipNumbers();
+  };
+  input.onkeydown = e => {
+    if (e.key !== 'Enter') return;
+    input.blur();
+    const v = Math.floor(ui.slip && ui.slip.stake || 0);
+    if (v >= MIN_BET && v <= S.balance) placeBet();
+  };
+}
+
+/* live-updates the payout math without rebuilding the sheet (keeps keyboard/caret) */
+function updateSlipNumbers(){
+  const slip = ui.slip; if (!slip) return;
+  const mult   = americanToMult(slip.market.odds);
+  const stake  = clamp(Math.floor(slip.stake||0), 0, 1e9);
+  const payout = Math.round(stake * mult);
+  const bad    = stake < MIN_BET || stake > S.balance;
+
+  const set = (id, txt) => { const n = document.getElementById(id); if (n) n.textContent = txt; };
+  set('slipRisk',   fmt(stake) + ' \ud83e\ude99');
+  set('slipToWin',  '+' + fmt(Math.max(0, payout - stake)) + ' \ud83e\ude99');
+  set('slipPayout', fmt(payout) + ' \ud83e\ude99');
+
+  const warn = document.getElementById('slipWarn');
+  if (warn){
+    warn.textContent = stake > S.balance ? 'Not enough coins \u2014 you have ' + fmt(S.balance) + '.'
+      : (stake && stake < MIN_BET) ? 'Minimum bet is ' + MIN_BET + ' coins.' : '';
+  }
+  const btn = $('#confirmBet');
+  if (btn){
+    btn.disabled = bad;
+    btn.textContent = bad ? 'Enter a valid wager' : 'Confirm bet \u00b7 ' + fmt(stake) + ' \ud83e\ude99';
+    btn.className = 'press mt-4 w-full rounded-2xl py-4 font-black text-[15px] ' + (bad
+      ? 'bg-ink-600 text-slate-500 border border-white/10'
+      : 'bg-gradient-to-r from-neon to-emerald-500 text-ink-900 shadow-xl shadow-neon/25');
+  }
+}
+
+/* refreshes just the score/countdown line inside an open slip */
+function updateSlipLive(g){
+  const n = document.getElementById('slipLive');
+  if (!n) return;
+  const sc = scoreOf(g);
+  n.innerHTML = isLive(g)
+    ? '<span class="text-flame font-semibold">LIVE ' + esc(g.away.abbr) + ' ' + sc.away + '\u2013' + sc.home + ' ' + esc(g.home.abbr) + ' \u00b7 ' + clockLabel(g) + '</span>'
+    : '<span class="text-slate-500">Starts in ' + countdown(g.startsAt - now()) + '</span>';
+}
+
+/* ---------------- modals ---------------- */
+function openModal(html, wire){
+  const root = $('#modalRoot');
+  root.classList.remove('hidden');
+  root.innerHTML = `
+    <div id="modalBd" class="absolute inset-0 bg-black/70"></div>
+    <div class="absolute inset-0 grid place-items-center p-5">
+      <div class="view w-full max-w-[400px] card p-5">${html}</div>
+    </div>`;
+  $('#modalBd').onclick = closeModal;
+  if (wire) wire(root);
+}
+function closeModal(){ const r = $('#modalRoot'); r.classList.add('hidden'); r.innerHTML=''; }
+
+function confirmModal(title, body, cta, onYes){
+  openModal(`
+    <h3 class="font-black text-[18px]">${esc(title)}</h3>
+    <p class="text-[13px] text-slate-400 mt-2 leading-relaxed">${esc(body)}</p>
+    <div class="mt-4 flex gap-2">
+      <button id="mCancel" class="press flex-1 rounded-xl bg-ink-600 border border-white/10 py-3 font-bold text-[13.5px]">Cancel</button>
+      <button id="mYes" class="press flex-1 rounded-xl bg-flame py-3 font-black text-[13.5px] text-white">${esc(cta)}</button>
+    </div>`, () => {
+    $('#mCancel').onclick = closeModal;
+    $('#mYes').onclick = () => { closeModal(); onYes(); };
+  });
+}
+
+function nameModal(){
+  openModal(`
+    <h3 class="font-black text-[18px]">Display name</h3>
+    <p class="text-[12.5px] text-slate-500 mt-1">This is what shows on the leaderboard and feed.</p>
+    <input id="nameInput" maxlength="18" value="${esc(S.profile.name)}"
+      class="mt-3 w-full rounded-xl bg-ink-700 border border-white/10 px-4 py-3 font-bold outline-none focus:border-neon/50" />
+    <div class="mt-4 flex gap-2">
+      <button id="mCancel" class="press flex-1 rounded-xl bg-ink-600 border border-white/10 py-3 font-bold text-[13.5px]">Cancel</button>
+      <button id="mSave" class="press flex-1 rounded-xl bg-neon text-ink-900 py-3 font-black text-[13.5px]">Save</button>
+    </div>`, () => {
+    const input = $('#nameInput');
+    input.focus(); input.select();
+    $('#mCancel').onclick = closeModal;
+    const commit = () => {
+      const v = input.value.trim().slice(0,18);
+      if (v) S.profile.name = v;
+      save(); closeModal(); renderMain(); toast('Name updated', 'good');
+    };
+    $('#mSave').onclick = commit;
+    input.onkeydown = e => { if (e.key === 'Enter') commit(); };
+  });
+}
+
+function avatarModal(){
+  openModal(`
+    <h3 class="font-black text-[18px]">Pick your avatar</h3>
+    <div class="mt-3 grid grid-cols-5 gap-2">
+      ${AVATARS.map(a => `<button data-av="${a}" class="press aspect-square rounded-xl grid place-items-center text-[26px] border
+        ${S.profile.avatar===a?'border-neon bg-neon/10':'border-white/10 bg-ink-600'}">${a}</button>`).join('')}
+    </div>
+    <button id="mCancel" class="press mt-4 w-full rounded-xl bg-ink-600 border border-white/10 py-3 font-bold text-[13.5px]">Done</button>`, root => {
+    root.querySelectorAll('[data-av]').forEach(b => b.onclick = () => {
+      S.profile.avatar = b.dataset.av; save(); closeModal(); renderMain(); toast('Avatar updated', 'good');
+    });
+    $('#mCancel').onclick = closeModal;
+  });
+}
+
+function bragModal(){
+  openModal(`
+    <h3 class="font-black text-[18px]">Post to the feed</h3>
+    <p class="text-[12.5px] text-slate-500 mt-1">Talk your talk. 180 characters.</p>
+    <textarea id="postInput" maxlength="180" rows="3" placeholder="Locks of the night..."
+      class="mt-3 w-full rounded-xl bg-ink-700 border border-white/10 px-4 py-3 outline-none focus:border-neon/50 text-[14px] resize-none"></textarea>
+    <div class="mt-3 flex gap-2">
+      <button id="mCancel" class="press flex-1 rounded-xl bg-ink-600 border border-white/10 py-3 font-bold text-[13.5px]">Cancel</button>
+      <button id="mPost" class="press flex-1 rounded-xl bg-violet text-white py-3 font-black text-[13.5px]">Post</button>
+    </div>`, () => {
+    const ta = $('#postInput'); ta.focus();
+    $('#mCancel').onclick = closeModal;
+    $('#mPost').onclick = () => {
+      const v = ta.value.trim();
+      if (!v) return closeModal();
+      addFeed({ user:S.profile.name, avatar:S.profile.avatar, me:true, text:v, kind:'post' });
+      closeModal(); ui.feedFilter = 'all'; renderMain(); toast('Posted to the feed', 'good');
+    };
+  });
+}
+
+/* ---------------- toasts + confetti ---------------- */
+function toast(msg, kind='good', ms=3000){
+  const root = $('#toastRoot');
+  const tone = kind === 'good' ? 'border-neon/40 bg-neon/10 text-neon'
+             : kind === 'bad'  ? 'border-flame/40 bg-flame/10 text-flame'
+             : 'border-gold/40 bg-gold/10 text-gold';
+  const n = el('div', `toast-in pointer-events-auto glass rounded-2xl border ${tone} px-4 py-3 text-[13px] font-bold shadow-2xl max-w-[92%] text-center`, esc(msg));
+  root.appendChild(n);
+  setTimeout(() => { n.classList.add('toast-out'); setTimeout(()=>n.remove(), 300); }, ms);
+  while (root.children.length > 3) root.firstChild.remove();   // column-reverse: firstChild is the oldest on screen
+}
+
+function confetti(){
+  const colors = ['#22e584','#ffc83d','#8b5cf6','#ff5470','#ffffff'];
+  for (let i=0;i<26;i++){
+    const b = el('div','confetti-bit');
+    b.style.left = (Math.random()*100) + 'vw';
+    b.style.background = colors[i % colors.length];
+    b.style.setProperty('--dx', (Math.random()*120-60)+'px');
+    b.style.setProperty('--rot', (Math.random()*900-450)+'deg');
+    b.style.animationDuration = (1.5 + Math.random()*1.3)+'s';
+    b.style.animationDelay = (Math.random()*.25)+'s';
+    document.body.appendChild(b);
+    setTimeout(()=>b.remove(), 3200);
+  }
+}
+
+/* ---------------- game loop ---------------- */
+function refreshSlate(){
+  // Retire finished games whose bets are all settled, keep the board full.
+  const liveOrPre = S.games.filter(g => !isFinal(g));
+  if (liveOrPre.length >= 5) return false;
+
+  const keepFinals = S.games.filter(g => isFinal(g) && S.bets.some(b => b.gameId === g.id && b.status === 'active'));
+  const base = now();
+  const fresh = [];
+  const leagues = Object.keys(LEAGUES);
+  for (let i=0;i<8;i++){
+    const league = leagues[Math.floor(Math.random()*leagues.length)];
+    const pool = TEAMS[league].slice();
+    const a = pool.splice(Math.floor(Math.random()*pool.length),1)[0];
+    const b = pool.splice(Math.floor(Math.random()*pool.length),1)[0];
+    fresh.push(makeGame(league, a, b, base + (i===0 ? -SIM_MS*0.2 : i*4.5*60*1000 + Math.random()*90000)));
+  }
+  S.games = [...liveOrPre, ...keepFinals, ...fresh].slice(0, 20);
+  save();
+  return true;
+}
+
+let tickN = 0;
+function tick(){
+  tickN++;
+  const settled = settleBets();
+  const chatter = botChatter();
+  const slateChanged = tickN % 10 === 0 ? refreshSlate() : false;
+
+  if (S.balance !== ui.lastBalance){ ui.lastBalance = S.balance; renderBalance(true); }
+
+  // Never yank the DOM out from under an open keyboard or modal.
+  const ae = document.activeElement;
+  const typing = !!ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA');
+  const modalOpen = !$('#modalRoot').classList.contains('hidden');
+
+  // Score/clock views refresh every second; the static ones every 5s.
+  const hot = ui.tab === 'home' || ui.tab === 'games';
+  const due = hot || tickN % 5 === 0 || settled || chatter || slateChanged;
+
+  if (!typing && !modalOpen && due) renderMain();
+
+  if (ui.sheetOpen && ui.slip){
+    const g = S.games.find(x => x.id === ui.slip.gameId);
+    if (!g || isFinal(g)){ toast('That game went final \u2014 slip closed.', 'bad'); closeSlip(); }
+    else updateSlipLive(g);
+  }
+  if (settled || chatter || slateChanged) save();
+}
+
+/* ---------------- boot ---------------- */
+function boot(){
+  S = load();
+  ui.lastBalance = S.balance;
+
+  // catch up on anything that finished while the tab was closed
+  settleBets();
+  refreshSlate();
+  S.stats.peakBalance = Math.max(S.stats.peakBalance, S.balance);
+  save();
+
+  renderAll();
+  $('#balancePill').onclick = () => { go('profile'); };
+
+  setInterval(tick, 1000);
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape'){
+      if (!$('#modalRoot').classList.contains('hidden')) closeModal();
+      else if (ui.sheetOpen) closeSlip();
+    }
+  });
+
+  if (S.stats.bets === 0){
+    setTimeout(() => toast('Welcome. ' + fmt(S.balance) + ' 🪙 on the house — go find a winner.', 'gold', 4500), 600);
+  }
+}
+
+boot();
+})();
+</script>
+</body>
+</html>
