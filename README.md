@@ -23,6 +23,31 @@ when a fresh 500 lands. There is no bailout button, so the coins have to mean so
 
 Coins that survive can be spent in the **prize shop** on permanent badges.
 
+## Play with friends
+
+Everyone who enters the same **room code** shares one chat, one live bet ticker and one leaderboard.
+Messages and tickets land on everybody's phone the moment they happen, and the league board in a room
+lists only the people actually in it — no bots.
+
+The app is a static file, so it needs somewhere to keep the room. A free **Firebase Realtime
+Database** does the whole job over plain HTTPS: no SDK, no build step, no account for your friends.
+
+1. Go to <https://console.firebase.google.com> and **Add project** (any name, analytics off).
+2. In the left sidebar pick **Build → Realtime Database → Create Database**. Choose any location and
+   **Start in test mode**.
+3. Copy the URL at the top — it looks like `https://your-project-default-rtdb.firebaseio.com`.
+4. In the app, open **You → Settings → Play with friends**, paste that URL, tap **New** for a room
+   code, then **Join room**.
+5. Send your friends the same URL and code. That's it.
+
+Test mode leaves the database open to anyone who has the URL, which is fine for a play-money game
+among friends and nothing else — there are no accounts, no passwords and no personal data in it, only
+display names, coin totals and chat. Firebase turns test mode off after 30 days; extend it in
+**Realtime Database → Rules**.
+
+Leaving a room puts you straight back to solo play, and a phone that hasn't checked in for two
+minutes drops off the board by itself.
+
 ## Light and dark
 
 Both themes ship, switchable in **You → Appearance**. *Auto* follows your phone's setting and
@@ -48,7 +73,7 @@ file it needs sits at the repo root, so GitHub Pages can serve the repo directly
 4. **Share → Add to Home Screen.**
 
 It then launches fullscreen with its own icon, no browser bar, and opens even with no signal: the
-service worker caches the app shell, and Quick Play needs no network.
+service worker caches the app shell.
 
 Any static host works the same way — Netlify, Cloudflare Pages, or your own server — as long as it
 serves the four files together over HTTPS.
@@ -77,8 +102,9 @@ receive notifications that way.
   app fetches that event by id to grade it — so a bet placed tonight settles correctly tomorrow.
 - State persists in `localStorage` under `spankbet.state.v3`. Saves from both earlier versions
   migrate automatically; corrupt or missing state falls back to a fresh account.
-- The live feed degrades quietly: failures back off exponentially, the board says so, and Quick Play
-  carries on offline.
+- The live feed degrades quietly: failures back off exponentially and the board says so.
+- Multiplayer is Firebase's REST API plus one `EventSource` stream — no SDK. A room that can't be
+  reached never blocks the app: the board, betting and settlement all carry on without it.
 - Spank Coins are play money. Odds carry a house edge, checked against the simulation.
 
 ### Rebuilding the stylesheet
