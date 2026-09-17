@@ -15,6 +15,9 @@ real spread otherwise. Once a game starts, every market is re-priced from the sc
 remaining, and decided markets come off the board. A price already in your slip is locked and never
 moves.
 
+Tap a game and you can **follow** either team. Your teams lead their day on the board, and a
+**⭐️ My teams** filter keeps it to just them.
+
 Games are grouped by day, newest first. The Daily Pick is always a game happening today.
 
 The home screen carries **today's headlines** under the board — stories and video clips from ESPN's
@@ -49,6 +52,15 @@ Two things you can do beyond that, and nothing else is asked of anybody:
   the chat, already joined, on the chat screen. They can type the five-character code instead if the
   link is awkward to pass on.
 - **Join a chat.** Paste a link or type a code.
+
+Hold a message and a row of faces appears, plus **Reply** — the message you held is quoted above
+whatever you write. Typing **@** and someone's name lights it up for the whole chat, and the person
+named gets their copy ringed in gold; the composer offers the names in the room so you don't have to
+spell them.
+
+Only the chat you are reading is streamed. Every message stamps its room, and the others are checked
+with one tiny read each, so a chat with something new in it wears a red dot — on its pill and on the
+Feed tab — until you look.
 
 Hold a message and a row of faces appears — ❤️ 👍 👎 😂 ‼️ ❓ — the way it works on a phone's own
 messages. Pick one and it sticks to the bubble on everybody's screen; tap your own again to take it
@@ -93,6 +105,32 @@ The leaderboard is the chat you are in: everyone who belongs to it, whether or n
 open. A green dot marks who is on right now, and the rest carry how long it has been since they were.
 Leaving a chat clears your row; closing the app does not. The people strip at the top of the chat is
 the opposite — that is only whoever is awake, so a phone quiet for two minutes drops off it.
+
+## Betting with, and against, each other
+
+A ticket in the chat carries a **Tail** button. Tapping it copies that person's picks onto your slip
+at today's price — it never wagers for you, it just fills the slip and opens it so you set your own
+stake. Legs whose games have already started are left behind and the toast says so.
+
+**Head to head** is on the slip: one pick, a game that hasn't started, and the chat gets a challenge
+at those stakes. Your coins are held the moment you post it. Whoever takes it gets the other side of
+exactly that market — you take the spread, they take the other side of the same spread — and both
+sides are even money, so the winner takes both stakes. Nobody takes it before kickoff and your coins
+come straight back.
+
+Each side is an ordinary ticket, so the same grading that settles everything else settles a
+challenge, off the same real result.
+
+## The Belt
+
+Win a week in a chat and you wear **The Belt** through the next one — a 🏆 next to your name on the
+board and in the chat, and a banner at the top of the league saying who holds it and what they won it
+with. The first time you open the app after taking it, it drops in full screen.
+
+Nobody's score is trusted to a single phone. As each player's week rolls over their final total is
+written down, and whoever opens first fills in anyone who hasn't opened yet, whose record still
+carries last week's number. The board itself can be ranked by **XP this week** or **profit this
+week** — XP rewards showing up, profit rewards being right.
 
 ## Light and dark
 
