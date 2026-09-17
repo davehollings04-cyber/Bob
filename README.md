@@ -50,6 +50,10 @@ Two things you can do beyond that, and nothing else is asked of anybody:
   link is awkward to pass on.
 - **Join a chat.** Paste a link or type a code.
 
+Hold a message and a row of faces appears — ❤️ 👍 👎 😂 ‼️ ❓ — the way it works on a phone's own
+messages. Pick one and it sticks to the bubble on everybody's screen; tap your own again to take it
+back. Two people picking the same one get a single pill with a count.
+
 You can be in several at once. Three people sending three different links leaves you with three
 chats, not one that keeps getting overwritten: each becomes a pill along the top of the chat screen
 and you tap between them. Opening a link while the app is already running works too — only the
