@@ -215,6 +215,9 @@
   <div id="modalRoot" class="fixed inset-0 z-[60] hidden"></div>
   <div id="reactRoot" class="fixed inset-0 z-[65] hidden"></div>
   <div id="beltRoot" class="fixed inset-0 z-[85] hidden"></div>
+  <!-- iOS gives a switch its own tick; this one is never seen and never read -->
+  <input id="hapticTick" type="checkbox" switch aria-hidden="true" tabindex="-1"
+         style="position:fixed;left:-40px;top:0;width:1px;height:1px;opacity:0.001;pointer-events:none">
   <div id="toastRoot" class="fixed top-[68px] inset-x-0 z-[70] flex flex-col items-center gap-2 px-4 pointer-events-none"></div>
 </div>
 
@@ -527,7 +530,7 @@ function freshState(){
     pick: null,
     liveCache: {},
     onboard: { done:false },
-    lastBonus: 0, lastFeedPush: now(), seenBadges: [], notify: false, news: [], beltSeen: '', favs: []
+    lastBonus: 0, lastFeedPush: now(), seenBadges: [], notify: false, news: [], beltSeen: '', favs: [], haptics: true
   };
 
   return s;
@@ -571,6 +574,7 @@ function load(){
     p.news       = Array.isArray(p.news) ? p.news.slice(0, 14) : [];
     p.beltSeen   = typeof p.beltSeen === 'string' ? p.beltSeen : '';
     p.favs       = Array.isArray(p.favs) ? p.favs.filter(x => typeof x === 'string') : [];
+    p.haptics    = p.haptics !== false;
     p.liveCache  = (p.liveCache && typeof p.liveCache === 'object') ? p.liveCache : {};
     p.onboard    = (p.onboard && typeof p.onboard === 'object') ? p.onboard : { done:true };
     p.seenBadges = Array.isArray(p.seenBadges) ? p.seenBadges : [];
@@ -1091,7 +1095,7 @@ function toggleLeg(gameId, key){
 
   const legs = S.slip.legs;
   const at = legs.findIndex(l => l.gameId === gameId && l.key === key);
-  if (at >= 0){ legs.splice(at, 1); save(); renderAll(); return; }
+  if (at >= 0){ legs.splice(at, 1); haptic('tap'); save(); renderAll(); return; }
   if (legs.length >= MAX_LEGS) return toast('Max ' + MAX_LEGS + ' legs.', 'bad');
 
   const m = findMarket(g, key);
@@ -1108,6 +1112,7 @@ function toggleLeg(gameId, key){
     label:m.label, sub:m.sub, odds:m.odds, status:'open'
   });
   if (g.src === 'live') S.liveCache[g.id] = slimGame(g);
+  haptic('select');
   save();
   if (replaced) toast('Swapped your pick on ' + g.away.abbr + ' @ ' + g.home.abbr, 'gold', 2000);
   renderAll();
@@ -1156,6 +1161,7 @@ function placeBet(){
   pushHistory(); checkBadges(); save();
 
   closeSheet();
+  haptic('heavy');                       // the one that should feel like a commitment
   const what = bet.legs.length > 1 ? bet.legs.length + '-leg parlay' : bet.legs[0].label;
   toast('Bet placed · ' + fmt(stake) + ' 🪙 on ' + what, 'good');
   syncPush('bets', { uid: myUid(), name:S.profile.name, realName:S.profile.realName || '',
@@ -1245,6 +1251,7 @@ function settleBets(){
         if (b.legs.some(l => l.type === 'prop')) S.stats.propWins++;
         if (b.legs.some(l => l.src === 'live')) S.stats.liveWins++;
         awardXp(XP.win, 'Bet won');
+        haptic('win');
         toast('Winner! +' + fmt(payout) + ' 🪙', 'good', 4200);
         notify('You won ' + fmt(payout) + ' coins 🎉', b.legs.length > 1 ? b.legs.length + '-leg parlay cashed' : b.legs[0].label + ' cashed');
         confetti();
@@ -1836,6 +1843,7 @@ function makePick(side){
   const g = gameById(p.gameId);
   if (!g || gIsFinal(g)) return toast('That game already finished.', 'bad');
   p.side = side;
+  haptic('select');
   S.stats.picks++;
   awardXp(XP.pick, 'Daily Pick');
   save();
@@ -2092,7 +2100,7 @@ function viewSignature(){
   const p = [ui.tab, ui.gamesFilter, ui.feedFilter, ui.boardBy, favs().join(','), !!ui.replyTo, Object.keys(sync.weeks||{}).join(','), S.balance, S.slip.legs.length,
              S.bets.length, S.feed.length, S.xp.total, S.streak.count, S.shop.owned.length,
              liveState.at, liveState.error, weekState.at, isBroke(),
-             newsState.at, newsState.items.length, JSON.stringify(sync.reacts || {}).length,
+             newsState.at, newsState.items.length, S.haptics, JSON.stringify(sync.reacts || {}).length,
              Object.keys(sync.duels || {}).length,
              sync.connected, Object.keys(sync.players).length, roomPlayers().length,
              Object.keys(sync.chat).length, Object.keys(sync.bets).length];
@@ -2967,6 +2975,7 @@ function openReactPicker(msgId, where){
   bar.querySelectorAll('[data-react]').forEach(b => b.onclick = e => {
     e.stopPropagation();
     closeReactPicker();
+    haptic('select');
     toggleReact(msgId, b.dataset.react);
   });
   const rp = bar.querySelector('[data-reply]');
@@ -2997,7 +3006,7 @@ function wireHold(node, msgId){
     const where = at;
     timer = setTimeout(() => {
       if (moved) return;
-      if (navigator.vibrate) { try { navigator.vibrate(12); } catch(err){} }
+      haptic('heavy');
       openReactPicker(msgId, where);
     }, 450);
   };
@@ -3299,6 +3308,12 @@ function viewYou(){
         <div class="font-extrabold text-[13.5px]">❓ How it works</div>
         <div class="text-[11.5px] text-muted font-semibold">Replay the 30-second tour</div>
       </button>
+      <button id="hapticBtn" class="btn w-full bg-surface2 px-4 py-3 text-left">
+        <div class="font-extrabold text-[13.5px]">${S.haptics === false ? '📳 Vibration off' : '📳 Vibration on'}</div>
+        <div class="text-[11.5px] text-muted font-semibold">${S.haptics === false
+          ? 'Tap to feel taps, bets and wins again'
+          : 'A tap for picks, a knock for bets, a roll for wins'}</div>
+      </button>
       <button id="wipeBtn" class="btn w-full bg-surface2 px-4 py-3 text-left">
         <div class="font-extrabold text-[13.5px] text-lose">🗑 Delete my account</div>
         <div class="text-[11.5px] text-muted font-semibold">Erase everything, here and in your chats</div>
@@ -3437,6 +3452,11 @@ function wireMain(){
   byId('notifyBtn', askNotify);
   byId('tourBtn', () => startOnboard(true));
   byId('wipeBtn', wipeModal);
+  byId('hapticBtn', () => {
+    S.haptics = S.haptics === false;
+    save(); haptic('good'); renderMain();
+    toast(S.haptics ? 'Vibration on' : 'Vibration off', 'gold', 2000);
+  });
   byId('installBtn', doInstall);
 
   // real games only publish a moneyline per event — pull it for what's on screen
@@ -4371,7 +4391,45 @@ function wireOnboard(){
 }
 
 /* ---------------- toasts + confetti ---------------- */
+/* ================================================================
+   HAPTICS
+   Android answers navigator.vibrate. iPhone does not — Safari has never
+   shipped it — but since iOS 17.4 flipping a switch control inside a real
+   tap produces the system tick, so that is what the fallback does. Either
+   way it is best effort and silent when neither works.
+================================================================= */
+const BUZZ = {
+  tap:    8,
+  select: [0, 12],
+  good:   [0, 14, 45, 22],
+  win:    [0, 22, 45, 22, 45, 60],
+  bad:    [0, 30, 65, 30],
+  heavy:  38
+};
+
+let hapticSwitch = null;
+let lastBuzz = 0;
+function haptic(kind = 'tap'){
+  if (S && S.haptics === false) return;
+  /* One action often ends in a toast and a badge check as well as itself.
+     Three buzzes in a row reads as a fault, so the first one in a moment wins. */
+  if (now() - lastBuzz < 220) return;
+  lastBuzz = now();
+  const pattern = BUZZ[kind] || BUZZ.tap;
+  try {
+    if (navigator.vibrate && navigator.vibrate(pattern)) return;
+  } catch(e){ /* blocked, fall through */ }
+  try {
+    if (!hapticSwitch){
+      hapticSwitch = document.getElementById('hapticTick');
+      if (!hapticSwitch) return;
+    }
+    hapticSwitch.checked = !hapticSwitch.checked;    // iOS answers the switch, not the API
+  } catch(e){}
+}
+
 function toast(msg, kind='good', ms=3000){
+  haptic(kind === 'good' ? 'good' : kind === 'bad' ? 'bad' : 'select');
   const root = $('#toastRoot');
   const tone = kind === 'good' ? 'border-brand text-brand' : kind === 'bad' ? 'border-lose text-lose' : 'border-gold text-gold';
   const n = el('div', `toast-in pointer-events-auto rounded-2xl border-2 ${tone} bg-surface px-4 py-2.5 text-[13px] font-extrabold shadow-lg max-w-[92%] text-center`, esc(msg));
@@ -4381,6 +4439,7 @@ function toast(msg, kind='good', ms=3000){
 }
 
 function confetti(){
+  haptic('win');
   const colors = ['#22c55e','#f59e0b','#8b5cf6','#ef4444','#38bdf8'];
   for (let i=0;i<26;i++){
     const b = el('div','confetti-bit');
