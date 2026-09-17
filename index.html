@@ -235,15 +235,6 @@ const LIVE_LEAGUES = {
 
 const leagueMeta = lg => LIVE_LEAGUES[lg] || { icon:'🏅', name:lg, periods:4, periodMin:15, base:50 };
 
-const BOT_NAMES = [
-  ['ParlayPastor','🙏'],['CoinFiend','😈'],['VegasVic','🎰'],['HoopsHermit','🏀'],['GridironGus','🏈'],
-  ['LockCityLina','🔒'],['FadeTheHerd','🐑'],['UnderdogUzi','🐕'],['ChalkEaterCJ','⚪️'],['MoneylineMo','💸'],
-  ['SweatKing','😅'],['BankrollBex','💼'],['PuckLuckPat','🏒'],['DimeDropperD','🎯'],['CashOutCarl','🏃'],
-  ['NoSweatNell','🧊'],['TailgateTod','🚙'],['BoxScoreBo','📊'],['LateMoneyLou','🌙'],['SharpShaniqua','🧠'],
-  ['HedgeHogHank','🦔'],['RunLineRae','⚾️'],['PuckLinePete','🥅'],['OvertimeOlu','⏱'],['BadBeatBrad','💀'],
-  ['ChalkyChen','🧾'],['LiveDogLiv','🐶'],['SundayScaries','😱'],['CoverCorey','🛡'],['JuiceBoxJay','🧃']
-];
-
 const BADGES = [
   { id:'first',   icon:'🎟️', name:'First Ticket',   desc:'Place your first bet',              test:s => s.stats.bets >= 1 },
   { id:'winner',  icon:'✅', name:'Cashed',          desc:'Win a bet',                         test:s => s.stats.wins >= 1 },
@@ -274,13 +265,16 @@ const PRIZES = [
 const AVATARS = ['🦍','🐉','🦅','🐺','🦊','🐸','🦈','🐲','👑','🔥','⚡️','💎','🎯','🃏','🚀','🥷','🤖','👽','🦁','🐍'];
 
 const TIERS = [
-  { name:'Bronze',   icon:'🥉', color:'#b45309' },
-  { name:'Silver',   icon:'🥈', color:'#64748b' },
-  { name:'Gold',     icon:'🥇', color:'#d9910d' },
-  { name:'Sapphire', icon:'💠', color:'#0ea5e9' },
-  { name:'Ruby',     icon:'♦️', color:'#e11d48' },
-  { name:'Diamond',  icon:'💎', color:'#8b5cf6' }
+  { name:'Bronze',   icon:'🥉', color:'#b45309', at:0     },
+  { name:'Silver',   icon:'🥈', color:'#64748b', at:500   },
+  { name:'Gold',     icon:'🥇', color:'#d9910d', at:1500  },
+  { name:'Sapphire', icon:'💠', color:'#0ea5e9', at:3500  },
+  { name:'Ruby',     icon:'♦️', color:'#e11d48', at:7000  },
+  { name:'Diamond',  icon:'💎', color:'#8b5cf6', at:12000 }
 ];
+/* Your rank is your own XP, not a placing against a field of invented rivals. */
+const tierIndex = xp => { let i = 0; for (let k = 0; k < TIERS.length; k++) if (xp >= TIERS[k].at) i = k; return i; };
+const myTier    = () => tierIndex(S.xp.total);
 
 /* ---------------- utils ---------------- */
 const $  = (s, r=document) => r.querySelector(s);
@@ -377,10 +371,8 @@ function demoState(){
   s.shop = { owned:['p_rookie','p_ice'] };
   s.streak = { count:12, best:14, lastDay: dayKey() };
 
-  s.league = { tier:2, week:weekKey(), bots:seedLeagueBots(2) };
-  const top = (s.league.bots.map(botXpNow).sort((a,b) => b-a)[0]) || 420;
-  const weekXp = Math.max(120, top - Math.max(10, Math.round(top * .05)));
-  s.xp = { total: weekXp + 1180, day: dayKey(), today: 65, week: weekKey(), weekXp };
+  s.league = { week:weekKey() };
+  s.xp = { total: 4260, day: dayKey(), today: 65, week: weekKey(), weekXp: 610 };
 
   s.stats = Object.assign(freshStats(), {
     bets:37, wins:19, losses:16, pushes:1, cashouts:3,
@@ -502,14 +494,13 @@ function freshState(){
     sync: { url:'', room:'', uid:'' },
     streak: { count:0, best:0, lastDay:null },
     xp: { total:0, day:null, today:0, week:weekKey(), weekXp:0 },
-    league: { tier:0, week:weekKey(), bots:[] },
+    league: { week:weekKey() },
     pick: null,
     liveCache: {},
     onboard: { done:false },
     lastBonus: 0, lastFeedPush: now(), seenBadges: [], notify: false
   };
-  s.feed = seedFeed();
-  s.league.bots = seedLeagueBots(0);
+
   return s;
 }
 
@@ -542,8 +533,8 @@ function load(){
     p.sync    = Object.assign({ url:'', room:'', uid:'' }, p.sync || {});
     p.streak  = Object.assign({ count:0, best:0, lastDay:null }, p.streak || {});
     p.xp      = Object.assign({ total:0, day:null, today:0, week:weekKey(), weekXp:0 }, p.xp || {});
-    p.league  = Object.assign({ tier:0, week:weekKey(), bots:[] }, p.league || {});
-    if (!Array.isArray(p.league.bots) || !p.league.bots.length) p.league.bots = seedLeagueBots(p.league.tier||0);
+    p.league  = { week: (p.league && p.league.week) || weekKey() };   // older saves carried a field of bots
+    if (Array.isArray(p.feed)) p.feed = p.feed.filter(m => m && m.me);  // drop anything a bot said
     p.liveCache  = (p.liveCache && typeof p.liveCache === 'object') ? p.liveCache : {};
     p.onboard    = (p.onboard && typeof p.onboard === 'object') ? p.onboard : { done:true };
     p.seenBadges = Array.isArray(p.seenBadges) ? p.seenBadges : [];
@@ -1213,9 +1204,26 @@ function cashOut(betId){
 const sync = { es:null, hb:null, connected:false, room:null,
                players:{}, chat:{}, bets:{}, lastErr:null };
 
-const syncOn = () => !!(S.sync && S.sync.url && S.sync.room);
-const syncBase = () => String(S.sync.url || '').replace(/\/+$/, '');
-const roomPath = suffix => syncBase() + '/rooms/' + encodeURIComponent(S.sync.room) + (suffix || '') + '.json';
+/* The main room. Open the link and you are in it with everyone else who did —
+   no code to type, no sign-up. A private code just swaps you onto your own room. */
+const LOBBY = 'MAIN';
+let SERVER = '';
+
+/* The address lives in config.json beside index.html, so it can change without
+   touching the app. Opening the file straight off disk simply finds nothing. */
+function loadConfig(){
+  if (location.protocol === 'file:') return Promise.resolve();   // nothing to fetch off a disk
+  return fetch('config.json', { cache:'no-store' })
+    .then(r => r.ok ? r.json() : null)
+    .then(c => { if (c && typeof c.server === 'string') SERVER = c.server.trim().replace(/\/+$/, ''); })
+    .catch(() => {});
+}
+
+const syncUrl  = () => ((S.sync && S.sync.url) || SERVER || '').replace(/\/+$/, '');
+const syncRoom = () => (S.sync && S.sync.room) || (syncUrl() ? LOBBY : '');
+const inLobby  = () => syncRoom() === LOBBY;
+const syncOn   = () => !!(syncUrl() && syncRoom());
+const roomPath = suffix => syncUrl() + '/rooms/' + encodeURIComponent(syncRoom()) + (suffix || '') + '.json';
 
 function myUid(){
   if (!S.sync.uid) { S.sync.uid = 'u' + uid() + uid(); save(); }
@@ -1232,7 +1240,7 @@ function syncDisconnect(){
 function syncConnect(){
   syncDisconnect();
   if (!syncOn()) return;
-  sync.room = S.sync.room;
+  sync.room = syncRoom();
   try {
     const es = new EventSource(roomPath());
     sync.es = es;
@@ -1333,6 +1341,9 @@ const newRoomCode = () => {
 /* who am I, without writing to storage */
 const myUidQuiet = () => (S.sync && S.sync.uid) || '';
 const inRoom = () => syncOn() && sync.connected;
+/* what to call the room you are in, on screen */
+const roomTitle = () => inLobby() ? 'Everyone playing' : 'Room ' + syncRoom();
+const roomShort = () => inLobby() ? 'everyone' : 'room ' + syncRoom();
 
 /* chat and bets, woven into one stream so the room reads like a group thread */
 function roomTimeline(){
@@ -1392,6 +1403,11 @@ function awardXp(n, why){
   if (Math.floor(S.xp.total / XP_PER_LEVEL) > before){
     setTimeout(() => { toast('Level ' + level() + '! 🎉', 'gold', 3500); confetti(); }, 700);
   }
+  const wasTier = tierIndex(S.xp.total - n);
+  if (myTier() > wasTier){
+    const t = TIERS[myTier()];
+    setTimeout(() => { toast(t.name + ' ' + t.icon, 'gold', 4500); confetti(); }, 1100);
+  }
   save();
   renderHeader();
   return n;
@@ -1409,60 +1425,27 @@ function checkStreakBreak(){
   }
 }
 
-function seedLeagueBots(tier){
-  const pool = BOT_NAMES.slice().sort(() => Math.random()-.5).slice(0, 24);
-  const pace = 12 + tier*9;
-  return pool.map(([name, avatar]) => ({
-    name, avatar,
-    xp: Math.floor(Math.random() * pace * 2),
-    rate: pace * (.5 + Math.random())            // xp per hour
-  }));
-}
-
 function rolloverWeek(){
-  const rows = leagueRows();
-  const me = rows.findIndex(r => r.me);
-  const top = me >= 0 && me < 5;
-  const bottom = me >= 0 && me >= rows.length - 5;
-  const oldTier = S.league.tier;
-
-  if (top && S.league.tier < TIERS.length - 1) S.league.tier++;
-  else if (bottom && S.league.tier > 0) S.league.tier--;
-
   S.league.week = weekKey();
-  S.league.bots = seedLeagueBots(S.league.tier);
   S.xp.week = weekKey();
   S.xp.weekXp = 0;
-
-  const t = TIERS[S.league.tier];
-  setTimeout(() => {
-    if (S.league.tier > oldTier){ toast('Promoted to ' + t.name + ' ' + t.icon, 'gold', 5000); confetti(); }
-    else if (S.league.tier < oldTier) toast('Dropped to ' + t.name + ' ' + t.icon + ' — climb back this week', 'bad', 5000);
-    else toast('New league week. ' + t.icon + ' ' + t.name, 'gold', 4000);
-  }, 800);
+  const t = TIERS[myTier()];
+  setTimeout(() => toast('New week. Everyone back to zero XP. ' + t.icon, 'gold', 4000), 800);
   save();
 }
 
-function botXpNow(b){
-  const hrs = Math.max(0, (now() - new Date(weekKey()+'T00:00:00').getTime()) / 3600000);
-  return Math.round(b.xp + b.rate * hrs * (.6 + .8*Math.abs(Math.sin(hrs/7 + b.rate))));
-}
-
+/* The board is whoever is actually playing. Nobody is invented to fill it out. */
 function leagueRows(){
-  /* In a room the board is the room: real people only, nobody invented. */
-  if (inRoom()){
-    const me = myUidQuiet();
-    const rows = roomPlayers().map(p => ({
-      name: p.name, realName: p.realName || '', avatar: p.avatar || '🙂',
-      me: p.id === me, xp: p.xp || 0, coins: p.coins || 0 }));
-    if (!rows.some(r => r.me)) rows.push({ name:S.profile.name, realName:S.profile.realName,
-      avatar:S.profile.avatar, me:true, xp:S.xp.weekXp, coins:Math.round(S.balance) });
-    rows.sort((a,b) => b.xp - a.xp);
-    return rows;
-  }
-  const rows = S.league.bots.map(b => ({ name:b.name, avatar:b.avatar, me:false, xp: botXpNow(b) }));
-  rows.push({ name:S.profile.name, realName:S.profile.realName, avatar:S.profile.avatar, me:true, xp:S.xp.weekXp });
-  rows.sort((a,b) => b.xp - a.xp);
+  const mine = { name:S.profile.name, realName:S.profile.realName || '', avatar:S.profile.avatar,
+                 me:true, xp:S.xp.weekXp, coins:Math.round(S.balance) };
+  if (!inRoom()) return [mine];
+
+  const me = myUidQuiet();
+  const rows = roomPlayers().map(p => ({
+    name: p.name, realName: p.realName || '', avatar: p.avatar || '🙂',
+    me: p.id === me, xp: p.xp || 0, coins: p.coins || 0 }));
+  if (!rows.some(r => r.me)) rows.push(mine);
+  rows.sort((a, b) => b.xp - a.xp);
   return rows;
 }
 
@@ -1598,58 +1581,10 @@ function checkBadges(){
 }
 
 /* ---------------- feed ---------------- */
-function seedFeed(){
-  const out = [];
-  const lines = [
-    ['hit a 4-leg parlay for {amt} coins. Never doubted it.','win'],
-    ['lost {amt} on a backdoor cover. I am fine. Everything is fine.','loss'],
-    ['tailing the under tonight, books are begging me to take the over.','post'],
-    ['{amt} coin cash on the underdog. Dogs eat.','win'],
-    ['cashed out early for {amt} and watched it win anyway. Cool. Cool cool cool.','loss'],
-    ['day 14 of the streak and I have not missed a Daily Pick yet.','post'],
-    ['anyone else fading the public today or just me?','post'],
-    ['bagged {amt} on a prop with a minute left. Heart rate: 190.','win']
-  ];
-  for (let i=0;i<8;i++){
-    const [name, av] = BOT_NAMES[i % BOT_NAMES.length];
-    const [txt, kind] = lines[i % lines.length];
-    const amt = (1 + Math.floor(Math.random()*18)) * 100;
-    out.push({ id:uid(), user:name, avatar:av, me:false, text:txt.replace('{amt}', fmt(amt)),
-      kind, amount: kind === 'post' ? 0 : amt,
-      t: now() - (i+1)*(3+Math.floor(Math.random()*9))*60000,
-      likes: Math.floor(Math.random()*40)+2, liked:false });
-  }
-  return out;
-}
-
 function addFeed(p){
   S.feed.unshift(Object.assign({ id:uid(), t:now(), likes: p.me ? Math.floor(Math.random()*6) : Math.floor(Math.random()*30)+3, liked:false, kind:'post', amount:0 }, p));
   if (S.feed.length > 60) S.feed.length = 60;
   save();
-}
-
-function botChatter(){
-  if (now() - S.lastFeedPush < 25000) return false;
-  S.lastFeedPush = now();
-  const [name, av] = pick(BOT_NAMES);
-  const pool = allGames();
-  const g = pool.length ? pick(pool) : null;
-  if (!g) return false;
-  const amt = (1 + Math.floor(Math.random()*24)) * 100;
-  const roll = Math.random();
-  let text, kind;
-  if (roll < .34){ kind='win';  text = 'just cashed ' + fmt(amt) + ' on ' + g.away.abbr + ' @ ' + g.home.abbr + '.'; }
-  else if (roll < .56){ kind='loss'; text = 'dropped ' + fmt(amt) + ' on ' + g.home.name + '. I will never learn.'; }
-  else if (roll < .70){ kind='win';  text = 'cashed out of my ' + g.away.abbr + ' ticket for ' + fmt(amt) + ' and slept like a baby.'; }
-  else { kind='post'; text = pick([
-      'the ' + g.home.name + ' line moved two points, somebody knows something.',
-      'live betting ' + g.away.abbr + ' right now is free money, do not tell the books.',
-      'my 6-leg parlay is 5-0 and I have aged nine years.',
-      'streak intact. Daily Pick in, bed by ten.',
-      'never bet on a team you love. Anyway, I bet on ' + g.home.name + '.'
-    ]); }
-  addFeed({ user:name, avatar:av, me:false, text, kind, amount: kind === 'post' ? 0 : amt });
-  return true;
 }
 
 /* ---------------- notifications ---------------- */
@@ -2067,7 +2002,7 @@ function roomStrip(){
     <div class="flex items-center justify-between mb-2">
       <div class="flex items-center gap-2">
         <span class="h-2 w-2 rounded-full bg-brand"></span>
-        <h2 class="font-extrabold text-[16px]">Room ${esc(S.sync.room)}</h2>
+        <h2 class="font-extrabold text-[16px]">${esc(roomTitle())}</h2>
       </div>
       <button data-goto="feed" class="tap text-[11.5px] font-extrabold text-brand">${heads.length} playing →</button>
     </div>
@@ -2224,7 +2159,7 @@ function viewFeed(){
       ${live
         ? `<button id="friendsBtn" class="tap flex items-center gap-1.5 rounded-full bg-surface2 border-2 border-line px-3 py-1">
              <span class="h-2 w-2 rounded-full bg-brand"></span>
-             <span class="text-[11.5px] font-extrabold">${heads.length} in ${esc(S.sync.room)}</span>
+             <span class="text-[11.5px] font-extrabold">${heads.length} online${inLobby() ? '' : ' · ' + esc(syncRoom())}</span>
            </button>`
         : `<span class="text-[11.5px] text-muted">${S.feed.length} messages</span>`}
     </div>
@@ -2238,15 +2173,17 @@ function viewFeed(){
     </div>` : ''}
 
     <div class="flex-1 space-y-1">
-      ${rows.length ? rows.join('') : empty('💬','No messages yet','Say something to kick it off.')}
+      ${rows.length ? rows.join('')
+        : live ? empty('💬','Nobody has said anything yet','You go first — everyone online will see it.')
+               : empty('💬','No messages yet','Say something to kick it off.')}
     </div>
 
     <div class="sticky bottom-0 pt-2 pb-1 bg-bg">
       <button id="brag" class="btn bg-surface2 w-full py-3 text-left px-4 text-[13.5px] text-muted font-bold">
-        Message ${live ? 'room ' + esc(S.sync.room) : 'the group'}…
+        Message ${live ? esc(roomShort()) : 'the group'}…
       </button>
       ${live
-        ? `<p class="text-center text-[10.5px] text-muted mt-2">Everyone in this room sees your messages and bets the second you make them.</p>`
+        ? `<p class="text-center text-[10.5px] text-muted mt-2">Real people only. Everyone here sees your messages and bets the second you make them.</p>`
         : `<button id="friendsBtn" class="btn w-full bg-surface2 py-2.5 mt-2 text-[12px] font-extrabold text-brand">👥 Play with friends</button>`}
     </div>
   </div>`;
@@ -2295,37 +2232,33 @@ function chatBubble(m, sameAsPrevious){
 function viewLeague(){
   const rows = leagueRows();
   const me = rows.findIndex(r => r.me);
-  const tier = TIERS[S.league.tier];
-  const next = TIERS[S.league.tier + 1];
+  const tier = TIERS[myTier()];
+  const next = TIERS[myTier() + 1];
   const endMs = new Date(weekKey()+'T00:00:00').getTime() + 7*86400000 - now();
-  /* promotion zones only mean something in a full field, not a room of four friends */
-  const zones = !inRoom() && rows.length >= 12;
+  const alone = rows.length < 2;
 
   return `
   <div class="space-y-3">
     <section class="card p-5 text-center">
-      <div class="text-[44px] leading-none">${inRoom() ? '🏠' : tier.icon}</div>
-      <h1 class="font-extrabold text-[20px] mt-1">${inRoom() ? 'Room ' + esc(S.sync.room) : tier.name + ' League'}</h1>
+      <div class="text-[44px] leading-none">${tier.icon}</div>
+      <h1 class="font-extrabold text-[20px] mt-1">${tier.name}</h1>
       <p class="text-[12.5px] text-muted mt-1">
-        ${inRoom() ? rows.length + ' playing · resets in ' + countdown(endMs)
-                   : 'Top 5 move up' + (next ? ' to ' + next.name : '') + ' · bottom 5 drop · ' + countdown(endMs) + ' left'}
+        ${next ? fmt(next.at - S.xp.total) + ' XP to ' + next.name + ' ' + next.icon
+               : 'Top rank — nothing above this.'}
       </p>
       <div class="mt-3 inline-flex items-center gap-2 rounded-full bg-surface2 border-2 border-line px-4 py-2">
         <span class="text-[15px]">⚡️</span>
         <span class="font-extrabold tabular-nums">${fmt(S.xp.weekXp)} XP this week</span>
       </div>
-      <p class="text-[11.5px] text-muted mt-2">${inRoom()
-        ? 'Only the people in room ' + esc(S.sync.room) + ' are on this board.'
-        : 'Earn XP by betting, winning and making your Daily Pick.'}</p>
+      <p class="text-[11.5px] text-muted mt-2">Earn XP by betting, winning and making your Daily Pick.</p>
     </section>
 
     <section class="card overflow-hidden">
       ${rows.map((r,i) => {
-        const up = zones && i < 5, down = zones && i >= rows.length-5;
-        const zone = 'border-l-4 ' + (up ? 'border-l-win' : down ? 'border-l-lose' : 'border-l-transparent');
+        const medal = i === 0 ? 'text-gold' : 'text-muted';
         return `
-        <div class="flex items-center gap-3 px-3.5 py-2.5 ${zone} ${r.me?'bg-brand/10':''} ${i?'border-t-2 border-t-line':''}">
-          <div class="w-6 text-center font-extrabold tabular-nums text-[13px] ${up?'text-win':down?'text-lose':'text-muted'}">${i+1}</div>
+        <div class="flex items-center gap-3 px-3.5 py-2.5 ${r.me?'bg-brand/10':''} ${i?'border-t-2 border-t-line':''}">
+          <div class="w-6 text-center font-extrabold tabular-nums text-[13px] ${medal}">${i+1}</div>
           <div class="h-9 w-9 rounded-full bg-surface2 border-2 border-line grid place-items-center text-[17px]">${r.avatar}</div>
           <div class="min-w-0 flex-1">
             <div class="font-extrabold text-[13.5px] truncate ${r.me?'text-brand':''}">${esc(r.name)}</div>
@@ -2336,11 +2269,19 @@ function viewLeague(){
       }).join('')}
     </section>
 
+    ${alone ? `
     <div class="card p-4 text-center">
-      <div class="text-[13px]">You're <span class="font-extrabold text-brand">#${me+1}</span> of ${rows.length}</div>
+      <div class="text-[13px] font-extrabold">Nobody else is playing right now</div>
+      <p class="text-[12px] text-muted mt-1 leading-snug">
+        This board is real people only — whoever has the app open. Send the link to a friend and they show up here.
+      </p>
+      <button id="friendsBtn" class="btn btn-primary w-full mt-3 py-2.5 text-[13px]">👥 Play with friends</button>
+    </div>` : `
+    <div class="card p-4 text-center">
+      <div class="text-[13px]">You're <span class="font-extrabold text-brand">#${me+1}</span> of ${rows.length} online</div>
       ${me > 0 ? `<div class="text-[12px] text-muted mt-1">${fmt(rows[me-1].xp - rows[me].xp)} XP behind ${esc(rows[me-1].name)}</div>`
-               : `<div class="text-[12px] text-gold mt-1">Top of the league. Hold it.</div>`}
-    </div>
+               : `<div class="text-[12px] text-gold mt-1">Top of the board. Hold it.</div>`}
+    </div>`}
   </div>`;
 }
 
@@ -2361,7 +2302,7 @@ function viewYou(){
       </div>
       ${S.profile.realName ? `<div class="text-[12.5px] text-muted">${esc(S.profile.realName)}</div>` : ''}
       <div class="mt-1 flex items-center justify-center gap-3 text-[12px] text-muted">
-        <span>Level ${level()}</span><span>·</span><span>${TIERS[S.league.tier].icon} ${TIERS[S.league.tier].name}</span>
+        <span>Level ${level()}</span><span>·</span><span>${TIERS[myTier()].icon} ${TIERS[myTier()].name}</span>
       </div>
       <div class="mt-4 grid grid-cols-4 gap-2">
         ${miniStat('🔥', S.streak.count, 'streak')}
@@ -2395,8 +2336,8 @@ function viewYou(){
         ${!S.notify && !standalone() ? `<div class="text-[11px] text-muted mt-1">On iPhone, add to your home screen first</div>` : ''}
       </button>
       <button id="friendsBtn" class="btn w-full bg-surface2 px-4 py-3 text-left">
-        <div class="font-extrabold text-[13.5px]">${inRoom() ? '👥 Room ' + esc(S.sync.room) + ' · ' + roomPlayers().length + ' here' : '👥 Play with friends'}</div>
-        <div class="text-[11.5px] text-muted font-semibold">${inRoom() ? 'Chat, bets and leaderboard are shared live' : 'Share a room code and bet together live'}</div>
+        <div class="font-extrabold text-[13.5px]">${inRoom() ? '👥 ' + esc(roomTitle()) + ' · ' + roomPlayers().length + ' online' : '👥 Play with friends'}</div>
+        <div class="text-[11.5px] text-muted font-semibold">${inRoom() ? 'Chat, bets and the board are shared live' : 'Chat and bet with everyone else playing'}</div>
       </button>
       <button id="demoBtn" class="btn w-full bg-surface2 px-4 py-3 text-left">
         <div class="font-extrabold text-[13.5px]">${DEMO ? '🎬 Leave demo mode' : '🎬 Demo mode'}</div>
@@ -2891,7 +2832,7 @@ function nameModal(){
       if (v) S.profile.name = v;
       const r = $('#realInput');
       if (r) S.profile.realName = r.value.trim().slice(0,24);
-      save(); closeModal(); renderMain(); toast('Name updated', 'good');
+      save(); syncHeartbeat(); closeModal(); renderMain(); toast('Name updated', 'good');
     };
     $('#mCancel').onclick = closeModal;
     $('#mSave').onclick = commit;
@@ -2907,7 +2848,7 @@ function avatarModal(){
     </div>
     <button id="mCancel" class="btn w-full mt-4 bg-surface2 py-3 text-[14px]">Done</button>`, root => {
     root.querySelectorAll('[data-av]').forEach(b => b.onclick = () => {
-      S.profile.avatar = b.dataset.av; save(); closeModal(); renderMain(); toast('Avatar updated', 'good');
+      S.profile.avatar = b.dataset.av; save(); syncHeartbeat(); closeModal(); renderMain(); toast('Avatar updated', 'good');
     });
     $('#mCancel').onclick = closeModal;
   });
@@ -2933,60 +2874,104 @@ function bragModal(){
   });
 }
 
-/* the whole multiplayer setup: one address, one code */
+/* Who you are playing with. The main room needs nothing; a code makes it private. */
 function friendsModal(){
   const connected = inRoom();
+  const heads = connected ? roomPlayers().length : 0;
+  const needsServer = !SERVER;
+
   openModal(`
     <h3 class="font-extrabold text-[19px]">👥 Play with friends</h3>
-    <p class="text-[12.5px] text-muted mt-1 leading-snug">
-      Everyone who enters the same code shares one chat, one live bet ticker and one leaderboard.
-    </p>
 
-    <label class="block text-[11px] uppercase tracking-wider font-extrabold text-muted mt-4 mb-1">Room code</label>
+    <div class="mt-3 rounded-xl border-2 ${connected ? 'border-brand/40 bg-brand/10' : 'border-line bg-surface2'} px-3.5 py-3">
+      <div class="font-extrabold text-[13.5px] ${connected ? 'text-brand' : ''}">
+        ${connected ? '● ' + esc(roomTitle()) + ' · ' + heads + ' online'
+                    : (sync.lastErr ? '○ ' + esc(sync.lastErr) : '○ Not connected')}
+      </div>
+      <p class="text-[11.5px] text-muted mt-1 leading-snug">
+        ${connected
+          ? (inLobby()
+              ? 'Everyone who opens the link is in here with you. Real people only — there are no bots in this app.'
+              : 'Only people who type this code are in here with you.')
+          : (needsServer
+              ? 'This app has no server set yet, so there is nobody to play with. Paste one below.'
+              : 'Trying to reach the server. Check your signal.')}
+      </p>
+    </div>
+
+    <p class="text-[12.5px] text-muted mt-4 leading-snug">
+      Send anyone this link and they land in the same room as you:
+    </p>
+    <div class="mt-1.5 flex gap-2">
+      <input id="fLink" value="${esc(appLink())}" readonly size="1"
+        class="min-w-0 flex-1 rounded-xl bg-surface2 border-2 border-line px-3 py-2.5 outline-none text-[12px]">
+      <button id="fCopy" class="btn btn-primary px-3.5 text-[12px] font-extrabold shrink-0">Copy</button>
+    </div>
+
+    <label class="block text-[11px] uppercase tracking-wider font-extrabold text-muted mt-4 mb-1">
+      ${inLobby() ? 'Or start a private room' : 'Private room code'}
+    </label>
     <div class="flex gap-2">
-      <input id="fRoom" value="${esc(S.sync.room || '')}" maxlength="12" placeholder="e.g. SPANK" size="1"
+      <input id="fRoom" value="${esc(inLobby() ? '' : syncRoom())}" maxlength="12" placeholder="e.g. SPANK" size="1"
         class="min-w-0 flex-1 rounded-xl bg-surface2 border-2 border-line px-4 py-3 outline-none focus:border-brand text-[15px] font-extrabold tracking-widest uppercase">
       <button id="fGen" class="btn bg-surface2 px-3 text-[12px] font-extrabold shrink-0">New</button>
     </div>
-
-    <label class="block text-[11px] uppercase tracking-wider font-extrabold text-muted mt-3 mb-1">Server address</label>
-    <input id="fUrl" value="${esc(S.sync.url || '')}" placeholder="https://your-app.firebaseio.com" size="1"
-      class="w-full min-w-0 rounded-xl bg-surface2 border-2 border-line px-4 py-3 outline-none focus:border-brand text-[12.5px]">
     <p class="text-[11px] text-muted mt-1.5 leading-snug">
-      A free Firebase Realtime Database. Make one once, paste the URL here, then send your friends the URL and the code.
+      A code splits you and whoever types it off into your own chat and board.
     </p>
 
-    <div class="mt-3 rounded-xl bg-surface2 border-2 border-line px-3 py-2 text-[11.5px] font-bold ${connected ? 'text-win' : 'text-muted'}">
-      ${connected ? '● Connected · ' + roomPlayers().length + ' here right now'
-                  : (sync.lastErr ? '○ ' + esc(sync.lastErr) : '○ Not connected')}
-    </div>
+    ${needsServer ? `
+      <label class="block text-[11px] uppercase tracking-wider font-extrabold text-muted mt-4 mb-1">Server address</label>
+      <input id="fUrl" value="${esc((S.sync && S.sync.url) || '')}" placeholder="https://your-app.firebaseio.com" size="1"
+        class="w-full min-w-0 rounded-xl bg-surface2 border-2 border-line px-4 py-3 outline-none focus:border-brand text-[12.5px]">
+      <p class="text-[11px] text-muted mt-1.5 leading-snug">
+        A free Firebase Realtime Database. Setup takes about three minutes and is written up in the README.
+      </p>` : ''}
 
-    <div class="mt-3 flex gap-2">
-      ${syncOn()
-        ? `<button id="fLeave" class="btn flex-1 bg-surface2 py-3 text-[14px]">Leave</button>`
-        : `<button id="fCancel" class="btn flex-1 bg-surface2 py-3 text-[14px]">Cancel</button>`}
-      <button id="fJoin" class="btn btn-primary flex-1 py-3 text-[14px]">Join room</button>
+    <div class="mt-4 flex gap-2">
+      ${!inLobby() && syncOn()
+        ? `<button id="fLeave" class="btn flex-1 bg-surface2 py-3 text-[14px]">Main room</button>`
+        : `<button id="fCancel" class="btn flex-1 bg-surface2 py-3 text-[14px]">Close</button>`}
+      <button id="fJoin" class="btn btn-primary flex-1 py-3 text-[14px]">${inLobby() ? 'Start room' : 'Join room'}</button>
     </div>`, () => {
     const room = $('#fRoom'), url = $('#fUrl');
     $('#fGen').onclick = () => { room.value = newRoomCode(); room.focus(); };
+    $('#fCopy').onclick = () => {
+      const f = $('#fLink');
+      f.select(); f.setSelectionRange(0, 9999);
+      const done = () => toast('Link copied — send it to anyone', 'good');
+      if (navigator.clipboard) navigator.clipboard.writeText(f.value).then(done, () => { document.execCommand('copy'); done(); });
+      else { document.execCommand('copy'); done(); }
+    };
     const cancel = $('#fCancel'); if (cancel) cancel.onclick = closeModal;
     const leave = $('#fLeave');
     if (leave) leave.onclick = () => {
-      /* take yourself off the board on the way out, so nobody is left seeing a ghost */
+      /* clear your row in the private room on the way out, so nobody sees a ghost */
       if (syncOn()) fetch(roomPath('/players/' + myUid()), { method:'DELETE' }).catch(() => {});
-      S.sync.room = ''; save(); syncDisconnect(); closeModal(); renderAll();
-      toast('Left the room — playing solo again', 'gold');
+      S.sync.room = ''; save(); syncConnect(); closeModal(); renderAll();
+      toast('Back in the main room', 'gold');
     };
     $('#fJoin').onclick = () => {
       const code = room.value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-      const addr = url.value.trim().replace(/\/+$/, '');
       if (!code) return toast('Pick a room code first', 'bad');
-      if (!/^https?:\/\/\S+$/.test(addr)) return toast('Paste your database URL — it starts with https://', 'bad');
-      S.sync.url = addr; S.sync.room = code; myUid(); save();
+      if (url){
+        const addr = url.value.trim().replace(/\/+$/, '');
+        if (!/^https?:\/\/\S+$/.test(addr)) return toast('Paste your database URL — it starts with https://', 'bad');
+        S.sync.url = addr;
+      }
+      if (syncOn()) fetch(roomPath('/players/' + myUid()), { method:'DELETE' }).catch(() => {});
+      S.sync.room = code; myUid(); save();
       closeModal(); syncConnect(); renderAll();
-      toast('Joined room ' + code, 'good');
+      toast('Room ' + code + ' — send the code to your friends', 'good');
     };
   });
+}
+
+/* the address someone else would open to land in here */
+function appLink(){
+  const l = location;
+  if (l.protocol === 'file:') return 'davehollings04-cyber.github.io/Bob/';
+  return (l.origin + l.pathname).replace(/index\.html$/, '').replace(/^https?:\/\//, '');
 }
 
 /* ================================================================
@@ -3022,6 +3007,7 @@ function finishOnboard(){
   S.onboard = { done:true };
   ui.onboard = null;
   save();
+  syncHeartbeat();                    // show up under your own name, not the default
   $('#onboardRoot').classList.add('hidden');
   $('#onboardRoot').innerHTML = '';
   renderAll();
@@ -3216,7 +3202,7 @@ function tick(){
   tickN++;
   const settled = settleBets();
   const picked = settlePick();
-  const chatter = inRoom() ? false : botChatter();
+  const chatter = false;
   if (tickN % 30 === 0) dailyReset();
   const rotated = false;
 
@@ -3289,7 +3275,7 @@ function boot(){
 
   refreshLive(true).then(() => { ensurePick(); afterLive(); fillWeek(true); });
   settleStaleLive().then(changed => { if (changed) afterLive(); });
-  if (syncOn()) syncConnect();
+  loadConfig().then(() => { if (syncOn()) syncConnect(); });
 
   setInterval(tick, 1000);
   document.addEventListener('visibilitychange', () => {

@@ -23,30 +23,40 @@ when a fresh 500 lands. There is no bailout button, so the coins have to mean so
 
 Coins that survive can be spent in the **prize shop** on permanent badges.
 
-## Play with friends
+## Everyone plays together
 
-Everyone who enters the same **room code** shares one chat, one live bet ticker and one leaderboard.
-Messages and tickets land on everybody's phone the moment they happen, and the league board in a room
-lists only the people actually in it — no bots.
+There are **no bots anywhere in this app**. The chat, the bet ticker and the leaderboard are real
+people or they are empty. Open the link and you are in the main room with everyone else who has it
+open — nothing to type, no sign-up. A private room code splits you and whoever types it off into
+your own chat and board.
 
-The app is a static file, so it needs somewhere to keep the room. A free **Firebase Realtime
-Database** does the whole job over plain HTTPS: no SDK, no build step, no account for your friends.
+The app is a static file, so the room needs somewhere to live. A free **Firebase Realtime Database**
+does the whole job over plain HTTPS: no SDK, no build step, no account for your friends.
 
 1. Go to <https://console.firebase.google.com> and **Add project** (any name, analytics off).
 2. In the left sidebar pick **Build → Realtime Database → Create Database**. Choose any location and
    **Start in test mode**.
 3. Copy the URL at the top — it looks like `https://your-project-default-rtdb.firebaseio.com`.
-4. In the app, open **You → Settings → Play with friends**, paste that URL, tap **New** for a room
-   code, then **Join room**.
-5. Send your friends the same URL and code. That's it.
+4. Paste it into **`config.json`** next to `index.html`:
+
+   ```json
+   { "server": "https://your-project-default-rtdb.firebaseio.com" }
+   ```
+
+5. Push. Everyone who opens the link is now in the same live room.
+
+Until that URL is set the app runs solo: the board and betting work normally, and the chat and
+leaderboard say plainly that nobody else is there rather than filling up with invented players. You
+can also paste a URL by hand in **You → Settings → Play with friends**, which is handy for testing
+without touching the repo.
 
 Test mode leaves the database open to anyone who has the URL, which is fine for a play-money game
-among friends and nothing else — there are no accounts, no passwords and no personal data in it, only
-display names, coin totals and chat. Firebase turns test mode off after 30 days; extend it in
+and nothing else — there are no accounts, no passwords and no payment details in it, only display
+names, coin totals and chat. Firebase turns test mode off after 30 days; extend it in
 **Realtime Database → Rules**.
 
-Leaving a room puts you straight back to solo play, and a phone that hasn't checked in for two
-minutes drops off the board by itself.
+A phone that hasn't checked in for two minutes drops off the board by itself, and leaving a private
+room clears your row on the way out.
 
 ## Light and dark
 
@@ -76,7 +86,7 @@ It then launches fullscreen with its own icon, no browser bar, and opens even wi
 service worker caches the app shell.
 
 Any static host works the same way — Netlify, Cloudflare Pages, or your own server — as long as it
-serves the four files together over HTTPS.
+serves the files together over HTTPS.
 
 ### Notifications on iOS
 
@@ -105,6 +115,10 @@ receive notifications that way.
 - The live feed degrades quietly: failures back off exponentially and the board says so.
 - Multiplayer is Firebase's REST API plus one `EventSource` stream — no SDK. A room that can't be
   reached never blocks the app: the board, betting and settlement all carry on without it.
+- The server address lives in `config.json`, fetched at boot and never cached by the service worker,
+  so it can change without rebuilding the app.
+- League rank is earned from your own lifetime XP (Bronze at 0 through Diamond at 12,000). There is
+  no promotion or relegation against a field, because there is no field to invent.
 - Spank Coins are play money. Odds carry a house edge, checked against the simulation.
 
 ### Rebuilding the stylesheet

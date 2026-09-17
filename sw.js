@@ -8,7 +8,7 @@
  * Opening index.html straight from disk skips this file entirely — the app
  * still runs, it just has no push and relies on the browser cache.
  */
-const CACHE = 'spankbet-v3';
+const CACHE = 'spankbet-v4';
 const SHELL = [
   './',
   './index.html',
@@ -43,6 +43,12 @@ self.addEventListener('fetch', e => {
 
   // scores and odds are never served from cache — stale prices are worse than none
   if (url.origin !== self.location.origin) return;
+
+  // where the shared room lives must never be served stale
+  if (url.pathname.endsWith('config.json')){
+    e.respondWith(fetch(req).catch(() => caches.match(req)));
+    return;
+  }
 
   // network first for the page itself, so a new deploy lands on the next open
   if (req.mode === 'navigate' || url.pathname.endsWith('index.html')){
