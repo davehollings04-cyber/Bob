@@ -542,7 +542,10 @@ function pushHistory(){
 /* ================================================================
    LIVE SPORTS  —  ESPN public feed, no key required
 ================================================================= */
-const ESPN = 'https://site.api.espn.com/apis/site/v2/sports/';
+/* site.web.api is the host ESPN's own web front end uses: it answers browser requests
+   with access-control-allow-origin:*, while site.api returns 403 to anything sending a
+   browser User-Agent. Same payloads, but this one is reachable from a hosted page. */
+const ESPN = 'https://site.web.api.espn.com/apis/site/v2/sports/';
 let LIVE = [];                   // normalised real games, memory only
 let liveState = { at:0, loading:false, error:null, tried:false, fails:0 };
 let weekState = { at:0, loading:false, done:false };
