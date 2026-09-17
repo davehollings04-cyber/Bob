@@ -1,0 +1,4 @@
+{
+  "_comment": "Where the shared room lives. Paste the URL of a free Firebase Realtime Database here and everyone who opens the app lands in the same live room. Empty means solo play. Setup is in the README.",
+  "server": ""
+}

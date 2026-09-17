@@ -7,14 +7,24 @@ Open `index.html` in any browser. No build step, no server, no API key.
 
 ## Real games only
 
-Live matchups from ESPN's public feed across **NFL, NBA, MLB and NHL**, covering a full calendar week
-— yesterday's finals through five days ahead — with real teams, records, scores, game clocks and real
-sportsbook spreads and totals. Moneylines come from the feed where published and are derived from the
+Live matchups from ESPN's public feed across **NFL, college football, NBA, college basketball, MLB and
+NHL**, covering a full calendar week — yesterday's finals through five days ahead — with real teams,
+records, scores, game clocks and real sportsbook spreads and totals. College teams carry their AP
+poll number, the way a broadcast writes it. Moneylines come from the feed where published and are derived from the
 real spread otherwise. Once a game starts, every market is re-priced from the score and time
 remaining, and decided markets come off the board. A price already in your slip is locked and never
 moves.
 
-Games are grouped by day. The Daily Pick is always a game happening today.
+Games are grouped by day, newest first. The Daily Pick is always a game happening today.
+
+A college division runs to hundreds of teams and one Saturday can carry sixty games, so the college
+boards are trimmed to the best twenty-five a day: contests ahead of walkovers, ranked teams ahead of
+unranked, with the last few slots kept for the big names even when they are playing a cupcake.
+
+No market is offered once one side is more than 80% likely — before kickoff or during the game. Early
+college football is full of −1500 favourites, and a play-money game whose difficulty comes from a
+daily bankroll can't have a risk-free grind sitting on the board. Those games keep their spread and
+total, which is how people bet them anyway.
 
 ## A small bankroll, and a real lockout
 
@@ -22,6 +32,41 @@ You start with **500 coins**. Lose them all and that is your day — betting is 
 when a fresh 500 lands. There is no bailout button, so the coins have to mean something.
 
 Coins that survive can be spent in the **prize shop** on permanent badges.
+
+## Everyone plays together
+
+There are **no bots anywhere in this app**. The chat, the bet ticker and the leaderboard are real
+people or they are empty. Open the link and you are in the main room with everyone else who has it
+open — nothing to type, no sign-up. A private room code splits you and whoever types it off into
+your own chat and board.
+
+The app is a static file, so the room needs somewhere to live. A free **Firebase Realtime Database**
+does the whole job over plain HTTPS: no SDK, no build step, no account for your friends.
+
+1. Go to <https://console.firebase.google.com> and **Add project** (any name, analytics off).
+2. In the left sidebar pick **Build → Realtime Database → Create Database**. Choose any location and
+   **Start in test mode**.
+3. Copy the URL at the top — it looks like `https://your-project-default-rtdb.firebaseio.com`.
+4. Paste it into **`config.json`** next to `index.html`:
+
+   ```json
+   { "server": "https://your-project-default-rtdb.firebaseio.com" }
+   ```
+
+5. Push. Everyone who opens the link is now in the same live room.
+
+Until that URL is set the app runs solo: the board and betting work normally, and the chat and
+leaderboard say plainly that nobody else is there rather than filling up with invented players. You
+can also paste a URL by hand in **You → Settings → Play with friends**, which is handy for testing
+without touching the repo.
+
+Test mode leaves the database open to anyone who has the URL, which is fine for a play-money game
+and nothing else — there are no accounts, no passwords and no payment details in it, only display
+names, coin totals and chat. Firebase turns test mode off after 30 days; extend it in
+**Realtime Database → Rules**.
+
+A phone that hasn't checked in for two minutes drops off the board by itself, and leaving a private
+room clears your row on the way out.
 
 ## Light and dark
 
@@ -48,10 +93,10 @@ file it needs sits at the repo root, so GitHub Pages can serve the repo directly
 4. **Share → Add to Home Screen.**
 
 It then launches fullscreen with its own icon, no browser bar, and opens even with no signal: the
-service worker caches the app shell, and Quick Play needs no network.
+service worker caches the app shell.
 
 Any static host works the same way — Netlify, Cloudflare Pages, or your own server — as long as it
-serves the four files together over HTTPS.
+serves the files together over HTTPS.
 
 ### Notifications on iOS
 
@@ -77,8 +122,13 @@ receive notifications that way.
   app fetches that event by id to grade it — so a bet placed tonight settles correctly tomorrow.
 - State persists in `localStorage` under `spankbet.state.v3`. Saves from both earlier versions
   migrate automatically; corrupt or missing state falls back to a fresh account.
-- The live feed degrades quietly: failures back off exponentially, the board says so, and Quick Play
-  carries on offline.
+- The live feed degrades quietly: failures back off exponentially and the board says so.
+- Multiplayer is Firebase's REST API plus one `EventSource` stream — no SDK. A room that can't be
+  reached never blocks the app: the board, betting and settlement all carry on without it.
+- The server address lives in `config.json`, fetched at boot and never cached by the service worker,
+  so it can change without rebuilding the app.
+- League rank is earned from your own lifetime XP (Bronze at 0 through Diamond at 12,000). There is
+  no promotion or relegation against a field, because there is no field to invent.
 - Spank Coins are play money. Odds carry a house edge, checked against the simulation.
 
 ### Rebuilding the stylesheet
