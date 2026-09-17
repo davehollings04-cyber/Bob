@@ -226,11 +226,16 @@ const XP_PER_LEVEL  = 100;
 const XP = { bet:10, win:25, pick:15, pickWin:25, cashout:5, bonus:5 };
 
 /* leagues we pull live, and the shape of each sport's clock */
+/* `week` marks a league whose default scoreboard already spans its own week, so it
+   is fetched once instead of a day at a time. `q` narrows a college feed to the top
+   division — without it college football alone returns several hundred teams. */
 const LIVE_LEAGUES = {
-  NFL: { path:'football/nfl',   icon:'🏈', name:'NFL', periods:4, periodMin:15, sigma:13.2, base:44  },
-  NBA: { path:'basketball/nba', icon:'🏀', name:'NBA', periods:4, periodMin:12, sigma:11.5, base:225 },
-  MLB: { path:'baseball/mlb',   icon:'⚾️', name:'MLB', periods:9, periodMin:0,  sigma:4.1,  base:8.5 },
-  NHL: { path:'hockey/nhl',     icon:'🏒', name:'NHL', periods:3, periodMin:20, sigma:2.6,  base:6.5 }
+  NFL:   { path:'football/nfl',                     icon:'🏈', name:'NFL',   periods:4, periodMin:15, sigma:13.2, base:44,  week:true },
+  NCAAF: { path:'football/college-football',        icon:'🎓', name:'NCAAF', periods:4, periodMin:15, sigma:16.5, base:52,  week:true, q:'groups=80', cap:25 },
+  NBA:   { path:'basketball/nba',                   icon:'🏀', name:'NBA',   periods:4, periodMin:12, sigma:11.5, base:225 },
+  NCAAB: { path:'basketball/mens-college-basketball', icon:'📣', name:'NCAAB', periods:2, periodMin:20, sigma:11,  base:145, q:'groups=50', cap:20 },
+  MLB:   { path:'baseball/mlb',                     icon:'⚾️', name:'MLB',   periods:9, periodMin:0,  sigma:4.1,  base:8.5 },
+  NHL:   { path:'hockey/nhl',                       icon:'🏒', name:'NHL',   periods:3, periodMin:20, sigma:2.6,  base:6.5 }
 };
 
 const leagueMeta = lg => LIVE_LEAGUES[lg] || { icon:'🏅', name:lg, periods:4, periodMin:15, base:50 };
@@ -610,7 +615,8 @@ function normalizeEspn(lg, ev){
     abbr: t.team.abbreviation || (t.team.shortDisplayName||'').slice(0,3).toUpperCase(),
     color: t.team.color ? '#'+t.team.color : '#64748b',
     logo: t.team.logo || null,
-    rec: ((t.records || [])[0] || {}).summary || ''
+    rec: ((t.records || [])[0] || {}).summary || '',
+    rank: ((t.curatedRank || {}).current) || 99          // 1-25 in the college polls
   });
 
   const st = c.status || {};
@@ -634,6 +640,7 @@ function normalizeEspn(lg, ev){
     half: null, first: null, method: null, props: [],
     updatedAt: now()
   };
+  g.rank = Math.min(g.home.rank, g.away.rank);       // the best-ranked side, for picking a slate
 
   if (o){
     if (typeof o.spread === 'number' && Math.abs(o.spread) > 0){
@@ -702,9 +709,41 @@ function dayStamp(offset){
    NFL is the exception: its default scoreboard already covers the whole week's slate. */
 async function fetchLeagueDay(lg, stamp){
   const L = LIVE_LEAGUES[lg];
-  const url = ESPN + L.path + '/scoreboard' + (stamp ? '?dates=' + stamp : '');
+  const q = [stamp ? 'dates=' + stamp : '', L.q || ''].filter(Boolean).join('&');
+  const url = ESPN + L.path + '/scoreboard' + (q ? '?' + q : '');
   const d = await getJSON(url);
-  return (d.events || []).map(ev => normalizeEspn(lg, ev)).filter(Boolean);
+  const games = (d.events || []).map(ev => normalizeEspn(lg, ev)).filter(Boolean);
+  return L.cap ? bestOfDay(games, L.cap) : games;
+}
+
+/* A college division runs to hundreds of teams and one Saturday can carry sixty
+   games. Keep what people actually want — ranked matchups first, then whatever
+   starts soonest — capped per day, so every day still gets its share. */
+function bestOfDay(games, cap){
+  const days = new Map();
+  for (const g of games){
+    const k = dayKey(g.startsAt);
+    if (!days.has(k)) days.set(k, []);
+    days.get(k).push(g);
+  }
+
+  /* A game nobody can lose is no fun to bet, and early-season college is full of
+     them, so a contest goes ahead of a walkover. Within each bucket the polls
+     decide, then kickoff time. The last few slots still go to the big names even
+     if they are playing a cupcake — you can still take the spread or the total. */
+  const contest = g => { const p = noVigHome(g.ml); return Math.max(p, 1 - p) < MAX_CONFIDENCE; };
+  const order = (a, b) => (a.rank - b.rank) || (a.startsAt - b.startsAt);
+
+  const out = [];
+  for (const day of days.values()){
+    const close = day.filter(contest).sort(order);
+    const rest  = day.filter(g => !contest(g)).sort(order);
+    const keep  = close.slice(0, Math.max(0, cap - 5));
+    keep.push(...rest.slice(0, cap - keep.length));
+    if (keep.length < cap) keep.push(...close.slice(keep.length));
+    out.push(...keep.slice(0, cap));
+  }
+  return out;
 }
 
 function mergeGames(list){
@@ -730,7 +769,7 @@ async function refreshLive(force){
   try {
     const today = dayStamp(0);
     const lists = await Promise.all(Object.keys(LIVE_LEAGUES).map(lg =>
-      fetchLeagueDay(lg, lg === 'NFL' ? null : today).catch(() => null)));
+      fetchLeagueDay(lg, LIVE_LEAGUES[lg].week ? null : today).catch(() => null)));
     if (!lists.some(Boolean)) throw new Error('all leagues failed');
     mergeGames(lists.filter(Boolean).flat());
     liveState.error = null;
@@ -754,7 +793,7 @@ async function fillWeek(force){
   try {
     const days = [];
     for (let d = -WEEK_BACK; d <= WEEK_AHEAD; d++) if (d !== 0) days.push(dayStamp(d));
-    const leagues = Object.keys(LIVE_LEAGUES).filter(lg => lg !== 'NFL');   // NFL's default already spans its week
+    const leagues = Object.keys(LIVE_LEAGUES).filter(lg => !LIVE_LEAGUES[lg].week);
 
     for (const stamp of days){
       const lists = await Promise.all(leagues.map(lg => fetchLeagueDay(lg, stamp).catch(() => null)));
@@ -922,13 +961,24 @@ const LIVE_VIG = .026;
    offered its favourite at -2400, which let you park coins on a near-lock over and
    over and never feel the daily limit. */
 const MAX_CONFIDENCE = .80;
+
+/* How sure this side already is. Live, that comes from the score and the clock.
+   Before kickoff it is just the price: a spread or a total is a coin flip by
+   construction, but a moneyline can be anything, and college brings a lot of
+   mismatches a real book will happily price at -1500. */
+function sureness(g, m){
+  if (gIsLive(g)) return legWinProb(m, g);
+  if (m.type !== 'ml' || !g.ml) return .5;
+  const pHome = noVigHome(g.ml);
+  return m.side === 'home' ? pHome : 1 - pHome;
+}
+
 function livePrice(g, m){
   const held = S.slip.legs.find(l => l.gameId === g.id && l.key === m.key);
   if (held) return held.odds;                 // a price in your slip never moves or vanishes
-  if (!gIsLive(g)) return m.odds;
-  const prob = legWinProb(m, g);
+  const prob = sureness(g, m);
   if (prob >= MAX_CONFIDENCE || prob <= 1 - MAX_CONFIDENCE) return null;
-  return probToAmerican(prob + LIVE_VIG);
+  return gIsLive(g) ? probToAmerican(prob + LIVE_VIG) : m.odds;
 }
 function priceRow(g, row){
   const inSlip = row.some(m => hasLeg(g.id, m.key));
@@ -1812,6 +1862,10 @@ function oddCell(g, m){
 
 /* DraftKings-style matchup row: teams down the left, a spread / moneyline / total
    grid on the right with each column aligned to its team. */
+/* the AP poll number, the way a broadcast writes it: #2 Georgia */
+const rankChip = t => (t && t.rank && t.rank <= 25)
+  ? `<span class="text-[11px] font-extrabold text-gold mr-1">#${t.rank}</span>` : '';
+
 function gameCard(g){
   const sc = gScore(g);
   const fin = gIsFinal(g);
@@ -1832,7 +1886,9 @@ function gameCard(g){
     <div class="flex items-center gap-2 h-[48px]">
       ${teamBadge(t)}
       <div class="min-w-0 flex-1">
-        <div class="font-extrabold text-[14px] truncate ${winner?'text-brand':''}">${esc(t.name)}</div>
+        <div class="font-extrabold text-[14px] truncate ${winner?'text-brand':''}">
+          ${rankChip(t)}${esc(t.name)}
+        </div>
         ${t.rec ? `<div class="text-[10.5px] text-muted leading-tight">${esc(t.rec)}</div>` : ''}
       </div>
       ${showScore ? `<div class="font-extrabold tabular-nums text-[18px] pr-1 ${winner?'text-brand':''}">${score}</div>` : ''}

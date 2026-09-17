@@ -7,14 +7,24 @@ Open `index.html` in any browser. No build step, no server, no API key.
 
 ## Real games only
 
-Live matchups from ESPN's public feed across **NFL, NBA, MLB and NHL**, covering a full calendar week
-— yesterday's finals through five days ahead — with real teams, records, scores, game clocks and real
-sportsbook spreads and totals. Moneylines come from the feed where published and are derived from the
+Live matchups from ESPN's public feed across **NFL, college football, NBA, college basketball, MLB and
+NHL**, covering a full calendar week — yesterday's finals through five days ahead — with real teams,
+records, scores, game clocks and real sportsbook spreads and totals. College teams carry their AP
+poll number, the way a broadcast writes it. Moneylines come from the feed where published and are derived from the
 real spread otherwise. Once a game starts, every market is re-priced from the score and time
 remaining, and decided markets come off the board. A price already in your slip is locked and never
 moves.
 
-Games are grouped by day. The Daily Pick is always a game happening today.
+Games are grouped by day, newest first. The Daily Pick is always a game happening today.
+
+A college division runs to hundreds of teams and one Saturday can carry sixty games, so the college
+boards are trimmed to the best twenty-five a day: contests ahead of walkovers, ranked teams ahead of
+unranked, with the last few slots kept for the big names even when they are playing a cupcake.
+
+No market is offered once one side is more than 80% likely — before kickoff or during the game. Early
+college football is full of −1500 favourites, and a play-money game whose difficulty comes from a
+daily bankroll can't have a risk-free grind sitting on the board. Those games keep their spread and
+total, which is how people bet them anyway.
 
 ## A small bankroll, and a real lockout
 
