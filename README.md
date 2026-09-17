@@ -132,6 +132,17 @@ written down, and whoever opens first fills in anyone who hasn't opened yet, who
 carries last week's number. The board itself can be ranked by **XP this week** or **profit this
 week** — XP rewards showing up, profit rewards being right.
 
+## Vibration
+
+Different things feel different: a light tap when a pick comes off the slip, a firmer one when it
+goes on, a knock when a bet is placed, a short roll on a win, a double on anything refused. One
+action often ends in a toast and a badge check as well as itself, so only the first buzz in a moment
+lands — three in a row reads as a fault.
+
+Android answers `navigator.vibrate`. Safari never shipped it, so on iPhone the fallback flips a
+hidden switch control inside the same tap, which is what produces the system tick from iOS 17.4. A
+phone that does neither is silent and unaffected. **You → Settings → Vibration** turns the lot off.
+
 ## Deleting an account
 
 **You → Settings → Delete my account** clears the phone and clears the person out of every chat they
