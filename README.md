@@ -94,6 +94,21 @@ open. A green dot marks who is on right now, and the rest carry how long it has 
 Leaving a chat clears your row; closing the app does not. The people strip at the top of the chat is
 the opposite — that is only whoever is awake, so a phone quiet for two minutes drops off it.
 
+## Betting with, and against, each other
+
+A ticket in the chat carries a **Tail** button. Tapping it copies that person's picks onto your slip
+at today's price — it never wagers for you, it just fills the slip and opens it so you set your own
+stake. Legs whose games have already started are left behind and the toast says so.
+
+**Head to head** is on the slip: one pick, a game that hasn't started, and the chat gets a challenge
+at those stakes. Your coins are held the moment you post it. Whoever takes it gets the other side of
+exactly that market — you take the spread, they take the other side of the same spread — and both
+sides are even money, so the winner takes both stakes. Nobody takes it before kickoff and your coins
+come straight back.
+
+Each side is an ordinary ticket, so the same grading that settles everything else settles a
+challenge, off the same real result.
+
 ## The Belt
 
 Win a week in a chat and you wear **The Belt** through the next one — a 🏆 next to your name on the
