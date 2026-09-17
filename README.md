@@ -5,37 +5,23 @@ cash value. Nothing can be bought, deposited, cashed out for real money, or trad
 
 Open `index.html` in any browser. No build step, no server, no API key.
 
-## Two boards
+## Real games only
 
-**Real games** — live matchups from ESPN's public feed: real teams, records, scores, game clocks and
-real sportsbook spreads and totals, refreshed while you watch. Moneylines come from the feed where
-published and are derived from the real spread otherwise. Covers NFL, NBA, MLB and NHL.
+Live matchups from ESPN's public feed across **NFL, NBA, MLB and NHL**, covering a full calendar week
+— yesterday's finals through five days ahead — with real teams, records, scores, game clocks and real
+sportsbook spreads and totals. Moneylines come from the feed where published and are derived from the
+real spread otherwise. Once a game starts, every market is re-priced from the score and time
+remaining, and decided markets come off the board. A price already in your slip is locked and never
+moves.
 
-**Quick Play** — simulated games that run start to final in 90 seconds, so there's always something
-to bet when nothing real is on. These carry the deeper markets: player props, first-half lines, first
-team to score, method of victory. They work with no internet at all.
+Games are grouped by day. The Daily Pick is always a game happening today.
 
-## First run
+## A small bankroll, and a real lockout
 
-Opening it for the first time asks two things — pick an avatar, type a name — and then runs a
-three-card tour. The first card is a real card you tap, so the odds explain themselves rather than
-being described. It takes about thirty seconds, can be skipped at any point, and replays from
-**You → Settings → How it works**. Existing saves never see it.
+You start with **500 coins**. Lose them all and that is your day — betting is closed until midnight,
+when a fresh 500 lands. There is no bailout button, so the coins have to mean something.
 
-## What you can do
-
-- **Bet** a moneyline, spread or total in two taps. Parlay up to 8 legs from different games; any
-  losing leg kills the ticket, a pushed leg drops out and the rest still pay.
-- **Cash out** a live ticket for a price built from each remaining leg's win probability. The quote
-  moves with the game until you confirm.
-- **Daily Pick** — one featured matchup a day, two buttons, no coins at risk. A single tap keeps your
-  streak alive on days you don't feel like betting.
-- **Streak, XP and a weekly league** — every action earns XP, a daily streak counts the days you show
-  up, and each week 30 players race for promotion through six tiers. Top 5 move up, bottom 5 drop.
-- **Feed, badges and bankroll history** on top of the usual profile.
-
-Live odds move once a game starts: every market is re-priced from the current score and time
-remaining, and markets that are already decided come off the board.
+Coins that survive can be spent in the **prize shop** on permanent badges.
 
 ## Light and dark
 
