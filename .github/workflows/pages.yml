@@ -30,7 +30,10 @@ jobs:
           cp -r icons _site/
           cp _site/index.html _site/404.html   # any path opens the app
 
+      # turns Pages on for the repo if it isn't already, so there is no manual setting to flip
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
