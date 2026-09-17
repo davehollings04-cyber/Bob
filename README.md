@@ -89,8 +89,10 @@ nothing else — there are no accounts, no passwords and no payment details in i
 coin totals and chat. Firebase turns test mode off after 30 days; extend it in
 **Realtime Database → Rules**.
 
-A phone that hasn't checked in for two minutes drops off the board by itself, and leaving a chat
-clears your row on the way out.
+The leaderboard is the chat you are in: everyone who belongs to it, whether or not they have the app
+open. A green dot marks who is on right now, and the rest carry how long it has been since they were.
+Leaving a chat clears your row; closing the app does not. The people strip at the top of the chat is
+the opposite — that is only whoever is awake, so a phone quiet for two minutes drops off it.
 
 ## Light and dark
 
