@@ -3164,7 +3164,12 @@ function wireSheet(){
   const input = $('#stakeInput');
   if (input){
     input.oninput = () => {
-      const v = parseInt(input.value.replace(/\D/g,''), 10);
+      /* The field is what you are betting, so it must not read -50 or 1.5 while
+         the slip quietly wagers 50 or 1. Put the number that will actually be
+         staked back in the box. */
+      const digits = input.value.replace(/\D/g,'').replace(/^0+(?=\d)/,'');
+      if (digits !== input.value) input.value = digits;
+      const v = parseInt(digits, 10);
       S.slip.stake = Number.isFinite(v) ? v : 0;
       updateSlipNumbers();
     };
