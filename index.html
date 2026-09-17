@@ -876,7 +876,7 @@ async function settleStaleLive(){
   return changed;
 }
 
-/* every game the app knows about, real and simulated */
+/* every game the app knows about: today's board plus any game a live ticket rides on */
 function allGames(){
   const out = LIVE.slice();
   const have = new Set(out.map(g => g.id));
