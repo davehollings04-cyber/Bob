@@ -182,8 +182,8 @@
    Virtual currency only ("Spank Coins"). No real money, ever.
 
    Two kinds of games share one engine:
-     src:'live'  — real matchups from ESPN's public feed (real scores + odds)
-     src:'sim'   — Quick Play: a simulated game that runs start-to-final in 90s
+   Every game is real: matchups, scores, clocks and odds come from ESPN's public
+   feed, covering a week of NFL, NBA, MLB and NHL.
 ================================================================= */
 (() => {
 'use strict';
@@ -1478,7 +1478,7 @@ async function doInstall(){
       <b class="text-fg">iPhone:</b> tap the Share button in Safari, then <b class="text-fg">Add to Home Screen</b>.<br><br>
       <b class="text-fg">Android:</b> tap the ⋮ menu in Chrome, then <b class="text-fg">Install app</b>.
     </p>
-    <p class="text-[12px] text-muted mt-3">It opens fullscreen with no browser bar, and Quick Play still works with no signal.</p>
+    <p class="text-[12px] text-muted mt-3">It opens fullscreen with no browser bar, and your bets and history stay put with no signal.</p>
     <button id="mCancel" class="btn w-full mt-4 bg-surface2 py-3 text-[14px]">Got it</button>`, () => {
     $('#mCancel').onclick = closeModal;
   });
@@ -2046,7 +2046,7 @@ function viewYou(){
 
     <p class="text-center text-[11px] text-muted px-6 pb-4 leading-relaxed">
       Spank Coins are play money with no cash value. Nothing here can be bought, cashed out for real money, or traded.
-      Real scores and odds come from ESPN's public feed; Quick Play games are simulated.
+      Real scores and odds come from ESPN's public feed.
     </p>
   </div>`;
 }
