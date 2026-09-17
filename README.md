@@ -132,6 +132,16 @@ written down, and whoever opens first fills in anyone who hasn't opened yet, who
 carries last week's number. The board itself can be ranked by **XP this week** or **profit this
 week** — XP rewards showing up, profit rewards being right.
 
+## Deleting an account
+
+**You → Settings → Delete my account** clears the phone and clears the person out of every chat they
+are in: their player row, their messages, their tickets, their reactions and their recorded weeks.
+Other people's messages are untouched. It takes two taps — the first only arms it — and it says
+plainly what goes before either.
+
+If the network is unreachable the phone is wiped anyway rather than trapping someone in an account
+they asked to delete.
+
 ## Light and dark
 
 Both themes ship, switchable in **You → Appearance**. *Auto* follows your phone's setting and
