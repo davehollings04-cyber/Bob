@@ -94,6 +94,17 @@ open. A green dot marks who is on right now, and the rest carry how long it has 
 Leaving a chat clears your row; closing the app does not. The people strip at the top of the chat is
 the opposite — that is only whoever is awake, so a phone quiet for two minutes drops off it.
 
+## The Belt
+
+Win a week in a chat and you wear **The Belt** through the next one — a 🏆 next to your name on the
+board and in the chat, and a banner at the top of the league saying who holds it and what they won it
+with. The first time you open the app after taking it, it drops in full screen.
+
+Nobody's score is trusted to a single phone. As each player's week rolls over their final total is
+written down, and whoever opens first fills in anyone who hasn't opened yet, whose record still
+carries last week's number. The board itself can be ranked by **XP this week** or **profit this
+week** — XP rewards showing up, profit rewards being right.
+
 ## Light and dark
 
 Both themes ship, switchable in **You → Appearance**. *Auto* follows your phone's setting and
