@@ -49,6 +49,38 @@ Add it to your home screen — **Share → Add to Home Screen** on iPhone, **⋮
 Android — and it opens fullscreen with no browser bar. Turn on bet alerts in **You → Settings** to
 get a notification when a ticket settles, which matters when a real game takes three hours.
 
+## Put it on your phone
+
+The app is one self-contained file, but iOS can't install from a file — it needs an HTTPS URL. This
+repo publishes itself to GitHub Pages:
+
+1. In the repo, open **Settings → Pages** and set **Source** to **GitHub Actions**.
+2. Push to `main` (or run the *Deploy to GitHub Pages* workflow by hand). The workflow in
+   `.github/workflows/pages.yml` publishes `index.html`, `manifest.webmanifest`, `sw.js` and the
+   icons.
+3. Open the published URL — `https://<your-user>.github.io/Bob/` — **in Safari** on your iPhone.
+4. **Share → Add to Home Screen.**
+
+It then launches fullscreen with its own icon, no browser bar, and opens even with no signal: the
+service worker caches the app shell, and Quick Play needs no network.
+
+Any static host works the same way — Netlify, Cloudflare Pages, or your own server — as long as it
+serves the four files together over HTTPS.
+
+### Notifications on iOS
+
+Apple only allows web push for a web app that has been **added to the home screen** — an open Safari
+tab can't ask. Install it first, then turn on alerts in **You → Settings**. Note that alerts fire
+while the app is running or backgrounded; pushing to a fully closed app needs a server to send the
+push, which a static site has no way to do. `sw.js` already handles a push payload if you later put
+one behind it.
+
+### Opening the file directly
+
+Double-clicking `index.html` still works and always will — the app falls back to an inline manifest,
+skips the service worker, and runs exactly the same. You just can't install it to a home screen or
+receive notifications that way.
+
 ## Technical notes
 
 - One file: `index.html`. Vanilla JS, no framework, no runtime dependencies.
