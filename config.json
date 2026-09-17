@@ -1,4 +1,4 @@
 {
-  "_comment": "Where the shared room lives. Paste the URL of a free Firebase Realtime Database here and everyone who opens the app lands in the same live room. Empty means solo play. Setup is in the README.",
-  "server": ""
+  "_comment": "Where the shared chats live. A free Firebase Realtime Database; the app reads this at boot so it can change without a rebuild. Empty means solo play.",
+  "server": "https://spank-bet-default-rtdb.firebaseio.com"
 }
