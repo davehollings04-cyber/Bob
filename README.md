@@ -15,6 +15,13 @@ published and are derived from the real spread otherwise. Covers NFL, NBA, MLB a
 to bet when nothing real is on. These carry the deeper markets: player props, first-half lines, first
 team to score, method of victory. They work with no internet at all.
 
+## First run
+
+Opening it for the first time asks two things — pick an avatar, type a name — and then runs a
+three-card tour. The first card is a real card you tap, so the odds explain themselves rather than
+being described. It takes about thirty seconds, can be skipped at any point, and replays from
+**You → Settings → How it works**. Existing saves never see it.
+
 ## What you can do
 
 - **Bet** a moneyline, spread or total in two taps. Parlay up to 8 legs from different games; any
