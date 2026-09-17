@@ -51,14 +51,14 @@ get a notification when a ticket settles, which matters when a real game takes t
 
 ## Put it on your phone
 
-The app is one self-contained file, but iOS can't install from a file — it needs an HTTPS URL. This
-repo publishes itself to GitHub Pages:
+The app is one self-contained file, but iOS can't install from a file — it needs an HTTPS URL. Every
+file it needs sits at the repo root, so GitHub Pages can serve the repo directly:
 
-1. In the repo, open **Settings → Pages** and set **Source** to **GitHub Actions**.
-2. Push to `main` (or run the *Deploy to GitHub Pages* workflow by hand). The workflow in
-   `.github/workflows/pages.yml` publishes `index.html`, `manifest.webmanifest`, `sw.js` and the
-   icons.
-3. Open the published URL — `https://<your-user>.github.io/Bob/` — **in Safari** on your iPhone.
+1. Open **Settings → Pages**. Under **Source** choose **Deploy from a branch**, set the branch to
+   **main** and the folder to **/ (root)**, then **Save**.
+2. Wait about a minute. The site publishes at `https://<your-user>.github.io/Bob/` and re-publishes
+   by itself on every push to `main`.
+3. Open that URL **in Safari** on your iPhone.
 4. **Share → Add to Home Screen.**
 
 It then launches fullscreen with its own icon, no browser bar, and opens even with no signal: the
