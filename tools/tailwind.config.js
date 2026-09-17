@@ -1,19 +1,29 @@
-/** Tailwind config for the inlined stylesheet in index.html.
+/** Tailwind config for the stylesheet inlined into index.html.
+ *  Colours resolve through CSS custom properties so one set of utility
+ *  classes covers both the light and dark themes.
  *  Run tools/build-css.sh after adding new utility classes to the app. */
+const withVar = v => `rgb(var(${v}) / <alpha-value>)`;
+
 module.exports = {
   content: ['../index.html'],
   darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        ink:   { 900:'#08090d', 800:'#0e1017', 700:'#141722', 600:'#1b1f2e', 500:'#252a3b', 400:'#333a50' },
-        neon:  { DEFAULT:'#22e584', dark:'#12b869' },
-        flame: { DEFAULT:'#ff5470', dark:'#e63757' },
-        gold:  { DEFAULT:'#ffc83d', dark:'#e0a800' },
-        violet:{ DEFAULT:'#8b5cf6' }
+        bg:       withVar('--bg'),
+        surface:  withVar('--surface'),
+        surface2: withVar('--surface2'),
+        line:     withVar('--line'),
+        fg:       withVar('--fg'),
+        muted:    withVar('--muted'),
+        brand:    withVar('--brand'),
+        win:      withVar('--win'),
+        lose:     withVar('--lose'),
+        gold:     withVar('--gold'),
+        violet:   withVar('--violet')
       },
       fontFamily: {
-        sans: ['-apple-system','BlinkMacSystemFont','SF Pro Display','Segoe UI','Roboto','Helvetica Neue','sans-serif']
+        sans: ['-apple-system','BlinkMacSystemFont','SF Pro Rounded','SF Pro Display','Segoe UI','Roboto','Helvetica Neue','sans-serif']
       }
     }
   }

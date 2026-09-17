@@ -1,56 +1,60 @@
 # Spank Betting
 
-A single-file social sports prediction app played entirely with **Spank Coins** — virtual currency
-with no cash value. Nothing can be purchased, deposited, cashed out for real money, or traded. Every
-game, opponent, price and rival user is simulated.
+A single-file social sports prediction app played with **Spank Coins** — virtual currency with no
+cash value. Nothing can be bought, deposited, cashed out for real money, or traded.
 
-Open `index.html` in any browser. No build step, no server, no network — the stylesheet is compiled
-into the file, so it works offline.
+Open `index.html` in any browser. No build step, no server, no API key.
 
-## What's in it
+## Two boards
 
-**Dashboard** — balance, lifetime profit and ROI, win/loss record and streak, live tickets with
-running scores, recent results. A daily bonus (+750) unlocks every 8 hours, and going broke turns it
-into a larger instant bailout (+1,000) so you're never stuck at zero.
+**Real games** — live matchups from ESPN's public feed: real teams, records, scores, game clocks and
+real sportsbook spreads and totals, refreshed while you watch. Moneylines come from the feed where
+published and are derived from the real spread otherwise. Covers NFL, NBA, MLB and NHL.
 
-**Scoreboard** — NFL, NBA, MLB, NHL, EPL and UFC, filterable by league. Games move through pre-game →
-live → final on their own; a full game runs in about 90 seconds, so you see tickets settle in one
-sitting. Cards tick scores and a real sport-specific game clock.
+**Quick Play** — simulated games that run start to final in 90 seconds, so there's always something
+to bet when nothing real is on. These carry the deeper markets: player props, first-half lines, first
+team to score, method of victory. They work with no internet at all.
 
-**Markets** — moneyline, spread and total on every card, and a full market sheet behind each matchup
-with first team to score, first-half / F5 / first-period spreads and totals, player props, and method
-of victory for UFC. Prices are American odds.
+## What you can do
 
-**Live odds** — once a game tips off, every market is re-priced from the current score and time
-remaining, and markets that are already decided come off the board. A team down 30 in the fourth is
-priced like a team down 30, not at its opening number.
+- **Bet** a moneyline, spread or total in two taps. Parlay up to 8 legs from different games; any
+  losing leg kills the ticket, a pushed leg drops out and the rest still pay.
+- **Cash out** a live ticket for a price built from each remaining leg's win probability. The quote
+  moves with the game until you confirm.
+- **Daily Pick** — one featured matchup a day, two buttons, no coins at risk. A single tap keeps your
+  streak alive on days you don't feel like betting.
+- **Streak, XP and a weekly league** — every action earns XP, a daily streak counts the days you show
+  up, and each week 30 players race for promotion through six tiers. Top 5 move up, bottom 5 drop.
+- **Feed, badges and bankroll history** on top of the usual profile.
 
-**Parlays** — stack up to 8 legs from different games; the odds multiply and every leg has to land.
-One leg per game, so picking a second market from the same matchup swaps your pick. A pushed leg
-drops out and the parlay pays on the rest.
+Live odds move once a game starts: every market is re-priced from the current score and time
+remaining, and markets that are already decided come off the board.
 
-**Cash out** — bail on a live ticket for a price that tracks the win probability of every remaining
-leg. The quote moves with the game right up until you confirm.
+## Light and dark
 
-**Feed & leaderboard** — a running social feed of wins, bad beats and takes, with likes, filters and
-your own posts (big wagers and big cashes post themselves). A podium leaderboard ranks everyone by
-total coins, you included.
+Both themes ship, switchable in **You → Appearance**. *Auto* follows your phone's setting and
+switches with it live. Every colour in the app resolves through one set of CSS custom properties, so
+there is a single stylesheet rather than a dark-mode fork.
 
-**Profile** — editable display name and avatar, bankroll history graph, 12 unlockable badges, full
-settled-bet history, and account controls to claim coins or reset.
+## Install it
+
+Add it to your home screen — **Share → Add to Home Screen** on iPhone, **⋮ → Install app** on
+Android — and it opens fullscreen with no browser bar. Turn on bet alerts in **You → Settings** to
+get a notification when a ticket settles, which matters when a real game takes three hours.
 
 ## Technical notes
 
 - One file: `index.html`. Vanilla JS, no framework, no runtime dependencies.
-- Dark, mobile-first UI built to feel native — bottom tab bar, floating bet slip, bottom sheets,
-  safe-area insets, spring transitions, toasts and confetti.
-- State (balance, bets, slip, games, feed, stats, profile) persists in `localStorage` under
-  `spankbet.state.v2` and survives refreshes. Saves from the earlier single-bet version migrate
-  automatically; corrupt or missing state falls back to a fresh account.
-- Each game's scoring timeline — including per-player prop contributions — is generated up front, so
-  scores and results stay consistent across reloads and grade correctly even if the tab was closed
-  while a game finished.
-- Tickets are never stranded: if a game leaves the board, its leg is voided and the stake refunded.
+- Real and simulated games share one engine behind a small interface (`gProgress`, `gScore`,
+  `gIsLive`…), so betting, grading, live pricing and cash-out never need to know which kind of game
+  they're looking at.
+- A ticket on a real game keeps a snapshot of that game. When the game drops off today's board, the
+  app fetches that event by id to grade it — so a bet placed tonight settles correctly tomorrow.
+- State persists in `localStorage` under `spankbet.state.v3`. Saves from both earlier versions
+  migrate automatically; corrupt or missing state falls back to a fresh account.
+- The live feed degrades quietly: failures back off exponentially, the board says so, and Quick Play
+  carries on offline.
+- Spank Coins are play money. Odds carry a house edge, checked against the simulation.
 
 ### Rebuilding the stylesheet
 
@@ -61,5 +65,5 @@ settled-bet history, and account controls to claim coins or reset.
 tools/build-css.sh
 ```
 
-That compiles `tools/input.css` with `tools/tailwind.config.js` (which holds the custom `ink` /
-`neon` / `flame` / `gold` palette) and splices the result back into `index.html`.
+That compiles `tools/input.css` with `tools/tailwind.config.js` — which maps Tailwind colours onto
+the theme's CSS variables — and splices the result back into `index.html`.
