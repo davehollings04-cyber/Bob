@@ -36,12 +36,24 @@ Coins that survive can be spent in the **prize shop** on permanent badges.
 ## Everyone plays together
 
 There are **no bots anywhere in this app**. The chat, the bet ticker and the leaderboard are real
-people or they are empty. Open the link and you are in the main room with everyone else who has it
-open — nothing to type, no sign-up. A private room code splits you and whoever types it off into
-your own chat and board.
+people or they are empty. Open the link and you are in the main chat with everyone else who has it
+open — nothing to type, no sign-up.
 
-The app is a static file, so the room needs somewhere to live. A free **Firebase Realtime Database**
-does the whole job over plain HTTPS: no SDK, no build step, no account for your friends.
+Two things you can do beyond that, and nothing else is asked of anybody:
+
+- **Create a chat.** Name it, and you get a link to send. Whoever opens that link lands straight in
+  the chat, already joined, on the chat screen. They can type the five-character code instead if the
+  link is awkward to pass on.
+- **Join a chat.** Paste a link or type a code.
+
+A link is the site URL with `#c=CODE` on the end. The app reads it on open, joins that chat, and
+tidies the URL away.
+
+### Switching chats on
+
+Nobody is ever asked for a server address — the app knows where its own server is. Setting that up is
+a one-time job for whoever hosts the app, and it is free: a **Firebase Realtime Database** does the
+whole thing over plain HTTPS, no SDK and no build step.
 
 1. Go to <https://console.firebase.google.com> and **Add project** (any name, analytics off).
 2. In the left sidebar pick **Build → Realtime Database → Create Database**. Choose any location and
@@ -53,20 +65,19 @@ does the whole job over plain HTTPS: no SDK, no build step, no account for your 
    { "server": "https://your-project-default-rtdb.firebaseio.com" }
    ```
 
-5. Push. Everyone who opens the link is now in the same live room.
+5. Push. Chats are on for everybody, with no further setup for anyone.
 
-Until that URL is set the app runs solo: the board and betting work normally, and the chat and
-leaderboard say plainly that nobody else is there rather than filling up with invented players. You
-can also paste a URL by hand in **You → Settings → Play with friends**, which is handy for testing
-without touching the repo.
+Until that URL is set the app runs solo and says so plainly: the board, betting, settlement, streaks
+and the prize shop all work, and the chat panel says chats aren't switched on yet rather than
+pretending otherwise.
 
-Test mode leaves the database open to anyone who has the URL, which is fine for a play-money game
-and nothing else — there are no accounts, no passwords and no payment details in it, only display
-names, coin totals and chat. Firebase turns test mode off after 30 days; extend it in
+Test mode leaves the database open to anyone who has the URL, which is fine for a play-money game and
+nothing else — there are no accounts, no passwords and no payment details in it, only display names,
+coin totals and chat. Firebase turns test mode off after 30 days; extend it in
 **Realtime Database → Rules**.
 
-A phone that hasn't checked in for two minutes drops off the board by itself, and leaving a private
-room clears your row on the way out.
+A phone that hasn't checked in for two minutes drops off the board by itself, and leaving a chat
+clears your row on the way out.
 
 ## Light and dark
 
@@ -126,7 +137,9 @@ receive notifications that way.
 - Multiplayer is Firebase's REST API plus one `EventSource` stream — no SDK. A room that can't be
   reached never blocks the app: the board, betting and settlement all carry on without it.
 - The server address lives in `config.json`, fetched at boot and never cached by the service worker,
-  so it can change without rebuilding the app.
+  so it can change without rebuilding the app. It appears nowhere in the interface.
+- A chat's name lives on the room itself, so a link carries only the code and everyone reads the name
+  off the server.
 - League rank is earned from your own lifetime XP (Bronze at 0 through Diamond at 12,000). There is
   no promotion or relegation against a field, because there is no field to invent.
 - Spank Coins are play money. Odds carry a house edge, checked against the simulation.
