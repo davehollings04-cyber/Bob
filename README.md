@@ -17,6 +17,10 @@ moves.
 
 Games are grouped by day, newest first. The Daily Pick is always a game happening today.
 
+The home screen carries **today's headlines** under the board — stories and video clips from ESPN's
+newsrooms across all six leagues, newest first, each opening in its own tab. They are cached, so they
+are on screen the instant the app opens and survive a trip through a tunnel.
+
 A college division runs to hundreds of teams and one Saturday can carry sixty games, so the college
 boards are trimmed to the best twenty-five a day: contests ahead of walkovers, ranked teams ahead of
 unranked, with the last few slots kept for the big names even when they are playing a cupcake.
@@ -45,6 +49,11 @@ Two things you can do beyond that, and nothing else is asked of anybody:
   the chat, already joined, on the chat screen. They can type the five-character code instead if the
   link is awkward to pass on.
 - **Join a chat.** Paste a link or type a code.
+
+You can be in several at once. Three people sending three different links leaves you with three
+chats, not one that keeps getting overwritten: each becomes a pill along the top of the chat screen
+and you tap between them. Opening a link while the app is already running works too — only the
+address bar changes, so the app watches for that as well as for a fresh load.
 
 A link is the site URL with `#c=CODE` on the end. The app reads it on open, joins that chat, and
 tidies the URL away.
