@@ -15,6 +15,9 @@ real spread otherwise. Once a game starts, every market is re-priced from the sc
 remaining, and decided markets come off the board. A price already in your slip is locked and never
 moves.
 
+Tap a game and you can **follow** either team. Your teams lead their day on the board, and a
+**⭐️ My teams** filter keeps it to just them.
+
 Games are grouped by day, newest first. The Daily Pick is always a game happening today.
 
 The home screen carries **today's headlines** under the board — stories and video clips from ESPN's
@@ -49,6 +52,15 @@ Two things you can do beyond that, and nothing else is asked of anybody:
   the chat, already joined, on the chat screen. They can type the five-character code instead if the
   link is awkward to pass on.
 - **Join a chat.** Paste a link or type a code.
+
+Hold a message and a row of faces appears, plus **Reply** — the message you held is quoted above
+whatever you write. Typing **@** and someone's name lights it up for the whole chat, and the person
+named gets their copy ringed in gold; the composer offers the names in the room so you don't have to
+spell them.
+
+Only the chat you are reading is streamed. Every message stamps its room, and the others are checked
+with one tiny read each, so a chat with something new in it wears a red dot — on its pill and on the
+Feed tab — until you look.
 
 Hold a message and a row of faces appears — ❤️ 👍 👎 😂 ‼️ ❓ — the way it works on a phone's own
 messages. Pick one and it sticks to the bubble on everybody's screen; tap your own again to take it
