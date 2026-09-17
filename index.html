@@ -1253,7 +1253,7 @@ function cashOut(betId){
    enters the same room code sees the same chat, bets and leaderboard.
 ================================================================= */
 const sync = { es:null, hb:null, connected:false, room:null,
-               players:{}, chat:{}, bets:{}, lastErr:null };
+               players:{}, chat:{}, bets:{}, meta:{}, lastErr:null };
 
 /* The main room. Open the link and you are in it with everyone else who did —
    no code to type, no sign-up. A private code just swaps you onto your own room. */
@@ -1285,7 +1285,7 @@ function syncDisconnect(){
   if (sync.es){ try { sync.es.close(); } catch(e){} sync.es = null; }
   clearInterval(sync.hb); sync.hb = null;
   sync.connected = false;
-  sync.players = {}; sync.chat = {}; sync.bets = {};
+  sync.players = {}; sync.chat = {}; sync.bets = {}; sync.meta = {};
 }
 
 function syncConnect(){
@@ -1314,8 +1314,15 @@ function applySync(msg){
     sync.players = d.players || {};
     sync.chat    = d.chat || {};
     sync.bets    = d.bets || {};
+    sync.meta    = d.meta || sync.meta || {};    // a name we just set outruns the snapshot
   } else {
     const [branch, key] = parts;
+    if (branch === 'meta'){
+      if (key == null) sync.meta = msg.data || {};
+      else sync.meta = Object.assign({}, sync.meta, { [key]: msg.data });
+      renderMain();
+      return;
+    }
     const bucket = branch === 'players' ? sync.players : branch === 'chat' ? sync.chat : branch === 'bets' ? sync.bets : null;
     if (!bucket) return;
     if (key == null) {
@@ -1382,6 +1389,43 @@ const roomBets = () => Object.entries(sync.bets)
   .sort((a, b) => (b.t || 0) - (a.t || 0))
   .slice(0, 30);
 
+/* What this chat is called. Whoever makes it names it; everyone else reads the
+   name off the room, so a link lands you in "Sunday Crew", not in "K7M2P". */
+const chatName = () => (sync.meta && sync.meta.name) || '';
+
+/* the address to send someone so they land in here */
+function appLink(code){
+  const l = location;
+  const base = (l.protocol === 'file:')
+    ? 'https://davehollings04-cyber.github.io/Bob/'
+    : (l.origin + l.pathname).replace(/index\.html$/, '');
+  return base + (code && code !== LOBBY ? '#c=' + code : '');
+}
+
+/* a code out of a link, a pasted URL, or someone typing it in */
+function readCode(text){
+  const m = /(?:#|\?|&)c=([A-Za-z0-9]{3,12})/.exec(String(text || ''));
+  const raw = m ? m[1] : String(text || '');
+  return raw.trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12);
+}
+
+/* make a chat: name it, and the code is ours to generate */
+function createChat(name){
+  const code = newRoomCode();
+  if (syncOn()) fetch(roomPath('/players/' + myUid()), { method:'DELETE' }).catch(() => {});
+  S.sync.room = code; myUid(); save();
+  syncConnect();                                    // this clears the old room's state
+  sync.meta = { name, by: S.profile.name, t: now() };
+  fetch(roomPath('/meta'), { method:'PUT', body: JSON.stringify(sync.meta) }).catch(() => {});
+  return code;
+}
+
+function joinChat(code){
+  if (syncOn()) fetch(roomPath('/players/' + myUid()), { method:'DELETE' }).catch(() => {});
+  S.sync.room = code; myUid(); save();
+  syncConnect();
+}
+
 const newRoomCode = () => {
   const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let out = '';
@@ -1393,9 +1437,9 @@ const newRoomCode = () => {
 const myUidQuiet = () => (S.sync && S.sync.uid) || '';
 const inRoom = () => syncOn() && sync.connected;
 /* what to call the room you are in, on screen */
-const roomTitle = () => inLobby() ? 'Everyone playing' : 'Room ' + syncRoom();
+const roomTitle = () => inLobby() ? 'Everyone playing' : (chatName() || 'Chat ' + syncRoom());
 const firstName = n => String(n || '').trim().split(/\s+/)[0] || '';
-const roomShort = () => inLobby() ? 'everyone' : 'room ' + syncRoom();
+const roomShort = () => inLobby() ? 'everyone' : (chatName() || 'chat ' + syncRoom());
 
 /* chat and bets, woven into one stream so the room reads like a group thread */
 function roomTimeline(){
@@ -2216,11 +2260,11 @@ function viewFeed(){
   <div class="flex flex-col" style="min-height:calc(100vh - var(--navh, 64px) - 150px)">
     <div class="flex items-start justify-between gap-3 px-1 pb-2.5">
       <div class="min-w-0">
-        <h1 class="font-extrabold text-[22px] leading-none">Chat</h1>
+        <h1 class="font-extrabold text-[22px] leading-none truncate">${live && !inLobby() ? esc(roomTitle()) : 'Chat'}</h1>
         ${live
           ? `<button data-friends class="tap mt-1.5 flex items-center gap-1.5">
-               <span class="h-2 w-2 rounded-full bg-brand"></span>
-               <span class="text-[11.5px] font-extrabold text-muted">${heads.length} online${inLobby() ? ' · everyone' : ' · ' + esc(syncRoom())}</span>
+               <span class="h-2 w-2 rounded-full bg-brand shrink-0"></span>
+               <span class="text-[11.5px] font-extrabold text-muted truncate">${heads.length} online${inLobby() ? ' · everyone with the app' : ''}</span>
              </button>`
           : `<div class="mt-1.5 text-[11.5px] text-muted font-bold">Nobody else is here yet</div>`}
       </div>
@@ -2247,7 +2291,7 @@ function viewFeed(){
         Message ${live ? esc(roomShort()) : 'the group'}…
       </button>
       <button data-friends class="btn w-full bg-surface2 py-2.5 mt-2 text-[12px] font-extrabold text-brand">
-        👥 ${live ? 'Invite someone · start a private room' : 'Play with friends'}
+        👥 ${live && !inLobby() ? 'Share this chat · ' + esc(syncRoom()) : 'Create a chat · join a chat'}
       </button>
       ${live ? `<p class="text-center text-[10.5px] text-muted mt-2">Real people only. Everyone here sees your messages and bets the second you make them.</p>` : ''}
     </div>
@@ -2539,7 +2583,7 @@ function wireMain(){
   byId('editName', nameModal);
   byId('editAvatar', avatarModal);
   byId('brag', bragModal);
-  m.querySelectorAll('[data-friends]').forEach(b => b.onclick = friendsModal);
+  m.querySelectorAll('[data-friends]').forEach(b => b.onclick = () => friendsModal());
   byId('notifyBtn', askNotify);
   byId('tourBtn', () => startOnboard(true));
   byId('installBtn', doInstall);
@@ -2948,104 +2992,160 @@ function bragModal(){
   });
 }
 
-/* Who you are playing with. The main room needs nothing; a code makes it private. */
-function friendsModal(){
+/* Two things you can do with a chat: make one, or join one. Nothing else is
+   asked of anybody — the address of the server is the app's problem, not theirs. */
+function friendsModal(mode){
   const connected = inRoom();
-  const heads = connected ? roomPlayers().length : 0;
-  const needsServer = !SERVER;
+  const here = connected ? roomPlayers().length : 0;
+  const mine = !inLobby() && syncOn();
+  const view = mode || (mine ? 'in' : 'pick');
 
-  openModal(`
-    <h3 class="font-extrabold text-[19px]">👥 Play with friends</h3>
-
-    <div class="mt-3 rounded-xl border-2 ${connected ? 'border-brand/40 bg-brand/10' : 'border-line bg-surface2'} px-3.5 py-3">
-      <div class="font-extrabold text-[13.5px] ${connected ? 'text-brand' : ''}">
-        ${connected ? '● ' + esc(roomTitle()) + ' · ' + heads + ' online'
-                    : (sync.lastErr ? '○ ' + esc(sync.lastErr) : '○ Not connected')}
-      </div>
-      <p class="text-[11.5px] text-muted mt-1 leading-snug">
-        ${connected
-          ? (inLobby()
-              ? 'Everyone who opens the link is in here with you. Real people only — there are no bots in this app.'
-              : 'Only people who type this code are in here with you.')
-          : (needsServer
-              ? 'This app has no server set yet, so there is nobody to play with. Paste one below.'
-              : 'Trying to reach the server. Check your signal.')}
+  if (!SERVER && !(S.sync && S.sync.url)){
+    return openModal(`
+      <h3 class="font-extrabold text-[19px]">👥 Chats</h3>
+      <p class="text-[13px] text-muted mt-2 leading-snug">
+        Group chats aren't switched on for this app yet. Everything else works —
+        the board, your bets, your streak — and the moment they're on, this is where
+        you'll make one.
       </p>
-    </div>
+      <button id="mCancel" class="btn w-full mt-4 bg-surface2 py-3 text-[14px]">Close</button>`,
+      () => { $('#mCancel').onclick = closeModal; });
+  }
 
-    <p class="text-[12.5px] text-muted mt-4 leading-snug">
-      Send anyone this link and they land in the same room as you:
+  /* already in a chat of your own: the link, who's here, and the way out */
+  if (view === 'in'){
+    return openModal(`
+      <h3 class="font-extrabold text-[19px]">${esc(chatName() || 'Your chat')}</h3>
+      <div class="mt-2 text-[12.5px] font-bold ${syncOn() ? 'text-brand' : 'text-muted'}">
+        ${syncOn() ? '● ' + Math.max(1, here) + ' online' : '○ not connected'}
+      </div>
+
+      <p class="text-[12.5px] text-muted mt-4 leading-snug">Send this to anyone. It drops them straight in.</p>
+      <div class="mt-1.5 flex gap-2">
+        <input id="fLink" value="${esc(appLink(syncRoom()))}" readonly size="1"
+          class="min-w-0 flex-1 rounded-xl bg-surface2 border-2 border-line px-3 py-2.5 outline-none text-[12px]">
+        <button id="fCopy" class="btn btn-primary px-4 text-[13px] font-extrabold shrink-0">Copy</button>
+      </div>
+      <p class="text-[11px] text-muted mt-1.5">Or they can type the code: <span class="font-extrabold tracking-widest">${esc(syncRoom())}</span></p>
+
+      <div class="mt-4 flex gap-2">
+        <button id="fLeave" class="btn flex-1 bg-surface2 py-3 text-[14px]">Leave chat</button>
+        <button id="mCancel" class="btn btn-primary flex-1 py-3 text-[14px]">Done</button>
+      </div>`, () => {
+      wireCopy();
+      $('#mCancel').onclick = closeModal;
+      $('#fLeave').onclick = () => {
+        if (syncOn()) fetch(roomPath('/players/' + myUid()), { method:'DELETE' }).catch(() => {});
+        S.sync.room = ''; save(); syncConnect(); closeModal(); renderAll();
+        toast('Left the chat', 'gold');
+      };
+    });
+  }
+
+  /* naming one */
+  if (view === 'create'){
+    return openModal(`
+      <h3 class="font-extrabold text-[19px]">Create a chat</h3>
+      <p class="text-[12.5px] text-muted mt-1 leading-snug">Give it a name your friends will recognise.</p>
+      <input id="fName" maxlength="24" placeholder="Sunday Crew" autocomplete="off" size="1"
+        class="mt-3 w-full min-w-0 rounded-xl bg-surface2 border-2 border-line px-4 py-3.5 font-extrabold text-[16px] outline-none focus:border-brand">
+      <div class="mt-4 flex gap-2">
+        <button id="fBack" class="btn flex-1 bg-surface2 py-3 text-[14px]">Back</button>
+        <button id="fGo" class="btn btn-primary flex-1 py-3 text-[14px]">Create</button>
+      </div>`, () => {
+      const input = $('#fName'); input.focus();
+      $('#fBack').onclick = () => friendsModal('pick');
+      const submit = () => {
+        const name = input.value.trim().slice(0, 24);
+        if (name.length < 2) return toast('Give the chat a name', 'bad');
+        createChat(name);
+        renderAll();
+        friendsModal('in');
+        toast('Chat created — send the link', 'good');
+      };
+      $('#fGo').onclick = submit;
+      input.onkeydown = e => { if (e.key === 'Enter') submit(); };
+    });
+  }
+
+  /* joining one */
+  if (view === 'join'){
+    return openModal(`
+      <h3 class="font-extrabold text-[19px]">Join a chat</h3>
+      <p class="text-[12.5px] text-muted mt-1 leading-snug">Paste the link someone sent you, or type the code.</p>
+      <input id="fCode" placeholder="Link or code" autocomplete="off" size="1"
+        class="mt-3 w-full min-w-0 rounded-xl bg-surface2 border-2 border-line px-4 py-3.5 font-extrabold text-[15px] outline-none focus:border-brand">
+      <div class="mt-4 flex gap-2">
+        <button id="fBack" class="btn flex-1 bg-surface2 py-3 text-[14px]">Back</button>
+        <button id="fGo" class="btn btn-primary flex-1 py-3 text-[14px]">Join</button>
+      </div>`, () => {
+      const input = $('#fCode'); input.focus();
+      $('#fBack').onclick = () => friendsModal('pick');
+      const submit = () => {
+        const code = readCode(input.value);
+        if (code.length < 3) return toast("That doesn't look like a chat link", 'bad');
+        joinChat(code);
+        closeModal(); go('feed'); renderAll();
+        toast('Joining…', 'good');
+      };
+      $('#fGo').onclick = submit;
+      input.onkeydown = e => { if (e.key === 'Enter') submit(); };
+    });
+  }
+
+  /* the fork in the road */
+  openModal(`
+    <h3 class="font-extrabold text-[19px]">👥 Chats</h3>
+    <p class="text-[12.5px] text-muted mt-1 leading-snug">
+      ${connected
+        ? 'You’re in the main chat with everyone who has the app open. Want your own?'
+        : 'Make one of your own, or join a friend’s.'}
     </p>
+
+    <button id="fCreate" class="btn w-full bg-surface2 px-4 py-4 mt-4 text-left">
+      <div class="font-extrabold text-[15px]">➕ Create a chat</div>
+      <div class="text-[12px] text-muted font-semibold mt-0.5">Name it, then send the link</div>
+    </button>
+    <button id="fJoin" class="btn w-full bg-surface2 px-4 py-4 mt-2 text-left">
+      <div class="font-extrabold text-[15px]">🔗 Join a chat</div>
+      <div class="text-[12px] text-muted font-semibold mt-0.5">Paste a link or type a code</div>
+    </button>
+
+    ${connected ? `
+    <p class="text-[12.5px] text-muted mt-5 leading-snug">Or share the main chat:</p>
     <div class="mt-1.5 flex gap-2">
-      <input id="fLink" value="${esc(appLink())}" readonly size="1"
+      <input id="fLink" value="${esc(appLink(''))}" readonly size="1"
         class="min-w-0 flex-1 rounded-xl bg-surface2 border-2 border-line px-3 py-2.5 outline-none text-[12px]">
-      <button id="fCopy" class="btn btn-primary px-3.5 text-[12px] font-extrabold shrink-0">Copy</button>
-    </div>
+      <button id="fCopy" class="btn btn-primary px-4 text-[13px] font-extrabold shrink-0">Copy</button>
+    </div>` : ''}
 
-    <label class="block text-[11px] uppercase tracking-wider font-extrabold text-muted mt-4 mb-1">
-      ${inLobby() ? 'Or start a private room' : 'Private room code'}
-    </label>
-    <div class="flex gap-2">
-      <input id="fRoom" value="${esc(inLobby() ? '' : syncRoom())}" maxlength="12" placeholder="e.g. SPANK" size="1"
-        class="min-w-0 flex-1 rounded-xl bg-surface2 border-2 border-line px-4 py-3 outline-none focus:border-brand text-[15px] font-extrabold tracking-widest uppercase">
-      <button id="fGen" class="btn bg-surface2 px-3 text-[12px] font-extrabold shrink-0">New</button>
-    </div>
-    <p class="text-[11px] text-muted mt-1.5 leading-snug">
-      A code splits you and whoever types it off into your own chat and board.
-    </p>
-
-    ${needsServer ? `
-      <label class="block text-[11px] uppercase tracking-wider font-extrabold text-muted mt-4 mb-1">Server address</label>
-      <input id="fUrl" value="${esc((S.sync && S.sync.url) || '')}" placeholder="https://your-app.firebaseio.com" size="1"
-        class="w-full min-w-0 rounded-xl bg-surface2 border-2 border-line px-4 py-3 outline-none focus:border-brand text-[12.5px]">
-      <p class="text-[11px] text-muted mt-1.5 leading-snug">
-        A free Firebase Realtime Database. Setup takes about three minutes and is written up in the README.
-      </p>` : ''}
-
-    <div class="mt-4 flex gap-2">
-      ${!inLobby() && syncOn()
-        ? `<button id="fLeave" class="btn flex-1 bg-surface2 py-3 text-[14px]">Main room</button>`
-        : `<button id="fCancel" class="btn flex-1 bg-surface2 py-3 text-[14px]">Close</button>`}
-      <button id="fJoin" class="btn btn-primary flex-1 py-3 text-[14px]">${inLobby() ? 'Start room' : 'Join room'}</button>
-    </div>`, () => {
-    const room = $('#fRoom'), url = $('#fUrl');
-    $('#fGen').onclick = () => { room.value = newRoomCode(); room.focus(); };
-    $('#fCopy').onclick = () => {
-      const f = $('#fLink');
-      f.select(); f.setSelectionRange(0, 9999);
-      const done = () => toast('Link copied — send it to anyone', 'good');
-      if (navigator.clipboard) navigator.clipboard.writeText(f.value).then(done, () => { document.execCommand('copy'); done(); });
-      else { document.execCommand('copy'); done(); }
-    };
-    const cancel = $('#fCancel'); if (cancel) cancel.onclick = closeModal;
-    const leave = $('#fLeave');
-    if (leave) leave.onclick = () => {
-      /* clear your row in the private room on the way out, so nobody sees a ghost */
-      if (syncOn()) fetch(roomPath('/players/' + myUid()), { method:'DELETE' }).catch(() => {});
-      S.sync.room = ''; save(); syncConnect(); closeModal(); renderAll();
-      toast('Back in the main room', 'gold');
-    };
-    $('#fJoin').onclick = () => {
-      const code = room.value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-      if (!code) return toast('Pick a room code first', 'bad');
-      if (url){
-        const addr = url.value.trim().replace(/\/+$/, '');
-        if (!/^https?:\/\/\S+$/.test(addr)) return toast('Paste your database URL — it starts with https://', 'bad');
-        S.sync.url = addr;
-      }
-      if (syncOn()) fetch(roomPath('/players/' + myUid()), { method:'DELETE' }).catch(() => {});
-      S.sync.room = code; myUid(); save();
-      closeModal(); syncConnect(); renderAll();
-      toast('Room ' + code + ' — send the code to your friends', 'good');
-    };
+    <button id="mCancel" class="btn w-full mt-4 bg-surface2 py-3 text-[14px]">Close</button>`, () => {
+    wireCopy();
+    $('#fCreate').onclick = () => friendsModal('create');
+    $('#fJoin').onclick   = () => friendsModal('join');
+    $('#mCancel').onclick = closeModal;
   });
 }
 
-/* the address someone else would open to land in here */
-function appLink(){
-  const l = location;
-  if (l.protocol === 'file:') return 'davehollings04-cyber.github.io/Bob/';
-  return (l.origin + l.pathname).replace(/index\.html$/, '').replace(/^https?:\/\//, '');
+function wireCopy(){
+  const btn = $('#fCopy'), field = $('#fLink');
+  if (!btn || !field) return;
+  btn.onclick = () => {
+    field.select(); field.setSelectionRange(0, 9999);
+    const done = () => toast('Link copied — send it to anyone', 'good');
+    if (navigator.clipboard) navigator.clipboard.writeText(field.value).then(done, () => { document.execCommand('copy'); done(); });
+    else { document.execCommand('copy'); done(); }
+  };
+}
+
+/* someone opened a link with a chat code in it: put them straight in it */
+function joinFromLink(){
+  const code = readCode(location.hash || location.search);
+  if (!code || code === (S.sync && S.sync.room)) return false;
+  joinChat(code);
+  try { history.replaceState(null, '', location.pathname + location.search); } catch(e){}
+  go('feed');
+  return true;
 }
 
 /* ================================================================
@@ -3373,7 +3473,10 @@ function boot(){
 
   refreshLive(true).then(() => { ensurePick(); afterLive(); fillWeek(true); });
   settleStaleLive().then(changed => { if (changed) afterLive(); });
-  loadConfig().then(() => { if (syncOn()) syncConnect(); });
+  loadConfig().then(() => {
+    if (joinFromLink()) return;          // a link with a code in it wins
+    if (syncOn()) syncConnect();
+  });
 
   setInterval(tick, 1000);
   document.addEventListener('visibilitychange', () => {
